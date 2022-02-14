@@ -4,10 +4,16 @@ module.exports = {
     browser: true,
     node: true
   },
-  plugins: [
-  ],
+  plugins: [],
   // add your custom rules here
   rules: {
+    "@typescript-eslint/strict-boolean-expressions": [
+      2,
+      {
+        "allowString": true,
+        "allowNumber": true
+      }
+    ]
   },
   extends: 'standard-with-typescript',
   parserOptions: {
