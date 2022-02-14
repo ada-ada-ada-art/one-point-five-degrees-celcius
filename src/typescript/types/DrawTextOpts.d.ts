@@ -4,4 +4,5 @@ interface DrawTextOpts {
   color: p5.Color
   baseX: number
   baseY: number
+  font: p5.Font
 }

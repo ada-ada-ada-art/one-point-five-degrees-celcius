@@ -14,7 +14,8 @@ Twitter: @ada_ada_ada_art.
 Licensed under CC BY-NC-SA 4.0.
 Built with p5.js.`)
 
-const initialRand: number = fxrand()
+const initialRand: number = fxrand() * 999999
+// const initialRand: number = 1
 
 const fettepaletteSettings = {
   total: 9,
@@ -43,6 +44,9 @@ const lona = new p5(startSketch,
 )
 
 function startSketch (s: p5): void {
+  s.randomSeed(initialRand)
+  s.noiseSeed(initialRand)
+
   const canvasWidth = window.innerHeight || window.innerWidth
   const canvasHeight = window.innerHeight
   const backgroundColor = colorRamp.light[0]
@@ -51,7 +55,7 @@ function startSketch (s: p5): void {
   const sentenceArr = sentence.split(' ') as string[]
   const jumbledArr = sentenceArr.map((val, idx) => {
     const rand = s.random()
-    if (rand > 0.5 && idx !== 0) return `|·|${val}`
+    if (rand > 0.5 && idx !== 0) return `|${val}`
     else return val
   })
   const finalJumbledArr = jumbledArr.join(' ').split('|')
@@ -81,37 +85,60 @@ function startSketch (s: p5): void {
     textMargin = s.height / jumbledArr.length
   }
 
+  let textY = fontSize + textMargin
   s.draw = () => {
     s.background(backgroundColor[0], backgroundColor[1] * 100, backgroundColor[2] * 100)
 
     s.textFont(mainFont)
     const textColor = s.color(colorRamp.base[6][0], colorRamp.base[6][1] * 100, colorRamp.base[6][2] * 100)
     const ellipseColor = s.color(colorRamp.light[8][0], colorRamp.light[8][1] * 100, colorRamp.light[8][2] * 100)
-    const textY = fontSize + textMargin
+    textY = fontSize + textMargin
+    let circleBounds = { x: leftOffset, y: textY, w: 0, h: 0 }
     for (let i = 0; i < finalJumbledArr.length; i++) {
       const txt = finalJumbledArr[i]
       const nextTxt = i < finalJumbledArr.length - 1 ? finalJumbledArr[i + 1] : '·'
-      const textX = leftOffset
       const textBox = drawText({
         txt,
-        baseX: textX,
+        baseX: circleBounds.x + circleBounds.w,
         baseY: textY,
-        color: textColor
-      })
-      const nextTextBox = drawText({
-        isSimulation: true,
-        txt: nextTxt,
-        baseX: textX,
-        baseY: textY,
-        color: textColor
+        color: textColor,
+        font: mainFont
       })
       // if (nextTextBox.x + nextTextBox.w > s.width -rightOffset) {
 
       // }
       const baseCircleX = textBox.x + textBox.w + fontSize
       const baseCircleY = textBox.y + textBox.h / 2
-      const circleCount = s.random(50, s.width / 3)
-      const circleBounds = drawCircles({
+      let circleCount = s.random(50, s.width / 3)
+      circleBounds = drawCircles({
+        baseX: baseCircleX,
+        baseY: baseCircleY,
+        circleCount,
+        circleRadius: fontSize / 2,
+        startColor: s.color('red'),
+        endColor: s.color('burgundy'),
+        isSimulation: true
+      })
+
+      const simulatedNextTextBox = drawText({
+        isSimulation: true,
+        txt: nextTxt,
+        baseX: circleBounds.x + circleBounds.w,
+        baseY: textY,
+        color: textColor,
+        font: mainFont
+      })
+
+      // If the next text was going to be out of bounds, we fill with circles
+      if (simulatedNextTextBox.wasMovedDown) {
+        console.log(`"${nextTxt}" was going to be moved down, and circle count was ${circleCount}`)
+        circleCount = s.width - baseCircleX - rightOffset
+        console.log(`so now it's ${circleCount}`)
+      } else if (circleBounds.x + circleBounds.w > s.width - rightOffset) {
+        // If the circles were going to go out of bounds, we make sure not to go out of bounds
+        circleCount = s.width - rightOffset - circleBounds.x
+      }
+      circleBounds = drawCircles({
         baseX: baseCircleX,
         baseY: baseCircleY,
         circleCount,
@@ -123,33 +150,36 @@ function startSketch (s: p5): void {
     s.noLoop()
   }
 
-  function drawText (opts: DrawTextOpts): RectBounds {
-    let textBox = mainFont.textBounds(opts.txt, opts.baseX, opts.baseY) as RectBounds
+  function drawText (opts: DrawTextOpts): TextBounds {
+    let textBox = opts.font.textBounds(opts.txt, opts.baseX, opts.baseY) as RectBounds
+    let wasMovedDown = false
     if (textBox.x + textBox.w > s.width - rightOffset) {
-      opts.baseY += textMargin
       opts.baseX = leftOffset
-      textBox = mainFont.textBounds(opts.txt, opts.baseX, opts.baseY) as RectBounds
+      textY += textMargin
+      opts.baseY += textMargin
+      textBox = opts.font.textBounds(opts.txt, opts.baseX, opts.baseY) as RectBounds
+      wasMovedDown = true
     }
     if (!opts.isSimulation) {
       s.fill(opts.color)
       s.noStroke()
       s.text(opts.txt, opts.baseX, opts.baseY)
     }
-    return textBox
+    return { ...textBox, wasMovedDown }
   }
 
   function drawCircles (opts: DrawCirclesOpts): RectBounds {
     const startX = opts.baseX - opts.circleRadius
     let finalX = 0
-    for (let e = 0; e < opts.circleCount; e++) {
+    for (let i = 0; i < opts.circleCount; i++) {
       s.colorMode(s.RGB)
-      const lerpVal = s.map(e, 0, opts.circleCount, 0, 1)
+      const lerpVal = s.map(i, 0, opts.circleCount, 0, 1)
       const interColor = s.lerpColor(opts.startColor, opts.endColor, lerpVal)
       if (!opts.isSimulation) {
         s.fill(interColor)
-        s.ellipse(opts.baseX + e, opts.baseY, opts.circleRadius * 2)
+        s.ellipse(opts.baseX + i, opts.baseY, opts.circleRadius * 2)
       }
-      finalX = opts.baseX + e + opts.circleRadius
+      finalX = opts.baseX + i + opts.circleRadius
     }
     return {
       x: startX,
