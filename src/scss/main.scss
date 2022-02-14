@@ -1,0 +1,30 @@
+$base: 8px;
+
+body {
+    align-items: center;
+    background: #333;
+    color: white;
+    display: flex;
+    height: 100vh;
+    justify-content: center;
+    margin: 0;
+    width: 100vw;
+}
+
+main {
+    align-items: center;
+    display: flex;
+    font-family: sans-serif;
+    flex-direction: column;
+    justify-content: center;
+
+    // .portrait & {
+    //     transform: rotate(90deg)
+    // }
+}
+
+#sketch {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
