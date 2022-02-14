@@ -97,9 +97,10 @@ function startSketch (s: p5): void {
     for (let i = 0; i < finalJumbledArr.length; i++) {
       const txt = finalJumbledArr[i]
       const nextTxt = i < finalJumbledArr.length - 1 ? finalJumbledArr[i + 1] : '·'
+      const textX = i === 0 ? circleBounds.x + circleBounds.w : circleBounds.x + circleBounds.w + fontSize
       const textBox = drawText({
         txt,
-        baseX: circleBounds.x + circleBounds.w,
+        baseX: textX,
         baseY: textY,
         color: textColor,
         font: mainFont
@@ -109,12 +110,13 @@ function startSketch (s: p5): void {
       // }
       const baseCircleX = textBox.x + textBox.w + fontSize
       const baseCircleY = textBox.y + textBox.h / 2
+      const circleRadius = fontSize / 2
       let circleCount = s.random(50, s.width / 3)
       circleBounds = drawCircles({
         baseX: baseCircleX,
         baseY: baseCircleY,
         circleCount,
-        circleRadius: fontSize / 2,
+        circleRadius,
         startColor: s.color('red'),
         endColor: s.color('burgundy'),
         isSimulation: true
@@ -131,9 +133,7 @@ function startSketch (s: p5): void {
 
       // If the next text was going to be out of bounds, we fill with circles
       if (simulatedNextTextBox.wasMovedDown) {
-        console.log(`"${nextTxt}" was going to be moved down, and circle count was ${circleCount}`)
-        circleCount = s.width - baseCircleX - rightOffset
-        console.log(`so now it's ${circleCount}`)
+        circleCount = s.width - baseCircleX - rightOffset - circleRadius
       } else if (circleBounds.x + circleBounds.w > s.width - rightOffset) {
         // If the circles were going to go out of bounds, we make sure not to go out of bounds
         circleCount = s.width - rightOffset - circleBounds.x
@@ -142,7 +142,7 @@ function startSketch (s: p5): void {
         baseX: baseCircleX,
         baseY: baseCircleY,
         circleCount,
-        circleRadius: fontSize / 2,
+        circleRadius,
         startColor: textColor,
         endColor: ellipseColor
       })
