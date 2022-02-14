@@ -49,24 +49,16 @@ function startSketch (s: p5): void {
 
   const sentence = s.random(sentences)
   const sentenceArr = sentence.split(' ') as string[]
-  // Can be jumbled better. Can currently only include two words.
-  const jumbledArr = [] as string[]
-  let shouldSkipNext = false
-  for (let i = 0; i < sentenceArr.length; i++) {
-    const val = sentenceArr[i]
+  const jumbledArr = sentenceArr.map((val, idx) => {
     const rand = s.random()
-    if (shouldSkipNext) {
-      shouldSkipNext = false
-    } else if (rand > 0.5 && i < sentenceArr.length - 1) {
-      jumbledArr.push(`${val} ${sentenceArr[i + 1]}`)
-      shouldSkipNext = true
-    } else {
-      jumbledArr.push(val)
-    }
-  }
-  console.log('jumbledArr', jumbledArr)
+    if (rand > 0.5 && idx !== 0) return `|·|${val}`
+    else return val
+  })
+  const finalJumbledArr = jumbledArr.join(' ').split('|')
+  console.log('finalJumbledArr', finalJumbledArr)
 
   let leftOffset = s.width / 10
+  let rightOffset = s.width / 10
   const topOffset = s.width / 10
   let textMargin = s.height / jumbledArr.length
   const fontSize = 30
@@ -85,6 +77,7 @@ function startSketch (s: p5): void {
     s.textAlign(s.LEFT)
 
     leftOffset = s.width / 10
+    rightOffset = s.width / 10
     textMargin = s.height / jumbledArr.length
   }
 
@@ -94,39 +87,75 @@ function startSketch (s: p5): void {
     s.textFont(mainFont)
     const textColor = s.color(colorRamp.base[6][0], colorRamp.base[6][1] * 100, colorRamp.base[6][2] * 100)
     const ellipseColor = s.color(colorRamp.light[8][0], colorRamp.light[8][1] * 100, colorRamp.light[8][2] * 100)
-    for (let i = 0; i < jumbledArr.length; i++) {
-      const txt = jumbledArr[i]
-      const textBox = mainFont.textBounds(txt, leftOffset, fontSize + textMargin * i) as RectBounds
-      s.fill(textColor)
-      s.noStroke()
-      s.text(txt, leftOffset, fontSize + textMargin * i)
+    const textY = fontSize + textMargin
+    for (let i = 0; i < finalJumbledArr.length; i++) {
+      const txt = finalJumbledArr[i]
+      const nextTxt = i < finalJumbledArr.length - 1 ? finalJumbledArr[i + 1] : '·'
+      const textX = leftOffset
+      const textBox = drawText({
+        txt,
+        baseX: textX,
+        baseY: textY,
+        color: textColor
+      })
+      const nextTextBox = drawText({
+        isSimulation: true,
+        txt: nextTxt,
+        baseX: textX,
+        baseY: textY,
+        color: textColor
+      })
+      // if (nextTextBox.x + nextTextBox.w > s.width -rightOffset) {
+
+      // }
+      const baseCircleX = textBox.x + textBox.w + fontSize
+      const baseCircleY = textBox.y + textBox.h / 2
       const ellipseCount = s.random(50, s.width / 3)
-      const circleBounds = drawCircles(ellipseCount, textColor, ellipseColor, textBox)
-      s.stroke('red')
-      s.noFill()
-      s.rect(circleBounds.x, circleBounds.y, circleBounds.w, circleBounds.h)
+      const circleBounds = drawCircles({
+        baseX: baseCircleX,
+        baseY: baseCircleY,
+        ellipseCount,
+        circleRadius: fontSize / 2,
+        startColor: textColor,
+        endColor: ellipseColor
+      })
     }
     s.noLoop()
   }
 
-  function drawCircles (ellipseCount: number, startColor: p5.Color, endColor: p5.Color, textBox: RectBounds): RectBounds {
-    const baseX = textBox.x + textBox.w + fontSize
-    const baseY = textBox.y + textBox.h / 2
-    const startX = baseX - fontSize / 2
+  function drawText (opts: DrawTextOpts): RectBounds {
+    let textBox = mainFont.textBounds(opts.txt, opts.baseX, opts.baseY) as RectBounds
+    if (textBox.x + textBox.w > s.width - rightOffset) {
+      opts.baseY += textMargin
+      opts.baseX = leftOffset
+      textBox = mainFont.textBounds(opts.txt, opts.baseX, opts.baseY) as RectBounds
+    }
+    if (!opts.isSimulation) {
+      s.fill(opts.color)
+      s.noStroke()
+      s.text(opts.txt, opts.baseX, opts.baseY)
+    }
+    return textBox
+  }
+
+  function drawCircles (opts: DrawCirclesOpts): RectBounds {
+    const startX = opts.baseX - opts.circleRadius
     let finalX = 0
-    for (let e = 0; e < ellipseCount; e++) {
+    for (let e = 0; e < opts.circleCount; e++) {
       s.colorMode(s.RGB)
-      const lerpVal = s.map(e, 0, ellipseCount, 0, 1)
-      const interColor = s.lerpColor(startColor, endColor, lerpVal)
-      s.fill(interColor)
-      s.ellipse(baseX + e, baseY, fontSize)
-      finalX = baseX + e + fontSize / 2
+      const lerpVal = s.map(e, 0, opts.circleCount, 0, 1)
+      const interColor = s.lerpColor(opts.startColor, opts.endColor, lerpVal)
+      if (!opts.isSimulation) {
+        s.fill(interColor)
+        s.ellipse(opts.baseX + e, opts.baseY, opts.circleRadius * 2)
+      }
+      finalX = opts.baseX + e + opts.circleRadius
     }
     return {
       x: startX,
-      y: baseY - fontSize / 2,
+      y: opts.baseY - opts.circleRadius,
       w: finalX - startX,
-      h: fontSize
+      h: opts.circleRadius * 2
     }
   }
 }
