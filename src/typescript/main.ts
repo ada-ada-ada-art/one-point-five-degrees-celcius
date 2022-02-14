@@ -110,11 +110,11 @@ function startSketch (s: p5): void {
       // }
       const baseCircleX = textBox.x + textBox.w + fontSize
       const baseCircleY = textBox.y + textBox.h / 2
-      const ellipseCount = s.random(50, s.width / 3)
+      const circleCount = s.random(50, s.width / 3)
       const circleBounds = drawCircles({
         baseX: baseCircleX,
         baseY: baseCircleY,
-        ellipseCount,
+        circleCount,
         circleRadius: fontSize / 2,
         startColor: textColor,
         endColor: ellipseColor

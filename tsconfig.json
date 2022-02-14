@@ -9,8 +9,8 @@
     "moduleResolution": "node",
     "outDir": "./public/js/",
     /* Redirect output structure to the directory. */
-    "rootDir": "./src/",
+    "rootDir": "./src/typescript/",
     /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
   },
-  "include": ["typescript/*.ts", "typescript/types/*.ts", "global.d.ts"]
+  "include": ["./src/typescript/*.ts", "./src/typescript/types/*.ts", "global.d.ts"]
 }
