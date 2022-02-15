@@ -5,4 +5,5 @@ interface DrawTextOpts {
   baseX: number
   baseY: number
   font: p5.Font
+  graphics?: p5.Graphics
 }

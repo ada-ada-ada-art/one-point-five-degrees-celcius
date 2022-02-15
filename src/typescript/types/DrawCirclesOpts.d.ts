@@ -6,4 +6,5 @@ interface DrawCirclesOpts {
   baseY: number
   circleCount: number
   circleRadius: number
+  graphics?: p5.Graphics
 }

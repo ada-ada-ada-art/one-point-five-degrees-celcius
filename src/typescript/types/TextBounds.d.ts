@@ -1,7 +1,7 @@
-interface TextBounds {
+interface TextBounds extends RectBounds {
   x: number
   y: number
   w: number
   h: number
-  wasMovedDown: boolean
+  wentOutOfBounds: boolean
 }
