@@ -15,7 +15,7 @@ Licensed under CC BY-NC-SA 4.0.
 Built with p5.js.`)
 
 const initialRand: number = fxrand() * 999999
-// const initialRand: number = 88807.58624848444
+// const initialRand: number = 26413.259924342623
 console.log('initialRand', initialRand)
 
 const fettepaletteSettings = {
@@ -61,35 +61,27 @@ function startSketch (s: p5): void {
     const rand = s.random()
     const str = `${prev} ${cur}`
     let shouldMakePitStop = str.length > maxStringLength
-    console.log('----', cur, '----')
     // Throw a dice to see if we want to add more text
     if (rand > 0.5 && idx !== 0) {
-      console.log('MORE TEXT')
       if (idx === arr.length - 1) {
-        console.log('BUT THIS IS LAST')
         jumbledArr.push(`${prev} ${cur}`.trim())
         return cur
       } else if (str.length <= maxStringLength) {
-        console.log('LETS GOOO')
         // If string is not long enough, keep trying to add more
         return str
       } else {
-        console.log('MAKE PIT STOP')
         // If string is long enough, add what we have so far and keep going
         shouldMakePitStop = true
       }
     }
     if (shouldMakePitStop) {
-      console.log('IN THE PIT STOP')
       jumbledArr.push(`${prev}`.trim())
       // If we're at the last word, add that one as well as a separate entry
       if (idx === arr.length - 1) {
-        console.log('LAST WORD')
         jumbledArr.push(`${cur}`.trim())
       }
       return cur
     }
-    console.log('ADD WHAT WE HAVE')
     // If dice didn't work, just add what we have now and reset the ongoing string
     jumbledArr.push(str.trim())
     return ''
@@ -105,8 +97,8 @@ function startSketch (s: p5): void {
   let mainFont: p5.Font
 
   s.preload = () => {
-    // mainFont = s.loadFont('./public/fonts/Inter-Light.otf')
-    mainFont = s.loadFont('./public/fonts/Inter-Bold.otf')
+    mainFont = s.loadFont('./public/fonts/Inter-Light.otf')
+    // mainFont = s.loadFont('./public/fonts/Inter-Bold.otf')
   }
 
   s.setup = () => {
@@ -178,28 +170,71 @@ function startSketch (s: p5): void {
       const txt = jumbledArr[i].trim()
       const nextTxt = i < jumbledArr.length - 1 ? jumbledArr[i + 1].trim() : ''
       const textX = i === 0 ? circleBounds.x + circleBounds.w : circleBounds.x + circleBounds.w + fontSize / 2
-      const textBox = drawText({
+      const circleRadius = fontSize / 2
+
+      // Simulate the text we're about to write
+      const simulatedBox = drawText({
         txt,
         baseX: textX,
         baseY: textY,
         color: textColor,
         font: mainFont,
-        graphics: activeLineGraphic
+        isSimulation: true
       })
-      const baseCircleX = textBox.x + textBox.w + fontSize
-      const baseCircleY = textBox.y + textBox.h / 2
-      const circleRadius = fontSize / 2
+      let shouldSkipText = false
+      // If it goes out of bounds, we might want to start with a circle on next line
+      if (simulatedBox.wentOutOfBounds) {
+        shouldSkipText = s.random() > 0.5
+      }
+      if (!shouldSkipText) {
+        drawText({
+          txt,
+          baseX: textX,
+          baseY: textY,
+          color: textColor,
+          font: mainFont,
+          graphics: activeLineGraphic
+        })
+      }
+      let baseCircleX = shouldSkipText ? simulatedBox.x + circleRadius : simulatedBox.x + simulatedBox.w + fontSize
+      let baseCircleY = simulatedBox.y + simulatedBox.h / 2
       let circleCount = s.random(50, s.width / 3)
+      // Draw circles now if we have skipped the text, else just simulate them so we can make sure we don't go off bounds
       circleBounds = drawCircles({
         baseX: baseCircleX,
         baseY: baseCircleY,
         circleCount,
         circleRadius,
-        startColor: s.color('black'),
-        endColor: s.color('grey'),
-        isSimulation: true
+        startColor,
+        endColor,
+        graphics: activeLineGraphic,
+        isSimulation: !shouldSkipText
       })
 
+      if (shouldSkipText) {
+        // If we skipped text, we want to draw it now after the circles we just drew
+        const skippedTextBox = drawText({
+          txt,
+          baseX: circleBounds.x + circleBounds.w + fontSize / 2,
+          baseY: textY,
+          color: textColor,
+          font: mainFont,
+          graphics: activeLineGraphic
+        })
+        // And then we draw circles once again
+        baseCircleX = skippedTextBox.x + skippedTextBox.w + fontSize
+        baseCircleY = skippedTextBox.y + skippedTextBox.h / 2
+        circleBounds = drawCircles({
+          baseX: baseCircleX,
+          baseY: baseCircleY,
+          circleCount,
+          circleRadius,
+          startColor: s.color('red'),
+          endColor: s.color('green'),
+          graphics: activeLineGraphic,
+          isSimulation: true
+        })
+      }
       // Simulate the next piece of text to find out if it's going to go out of bounds
       const simulatedNextTextBox = drawText({
         txt: nextTxt,
@@ -229,6 +264,7 @@ function startSketch (s: p5): void {
         })
       }
 
+      // If the next text was gonna go out of bounds, we move to the next line
       if (simulatedNextTextBox.wentOutOfBounds) {
         allLineGraphics.push(activeLineGraphic)
         activeLineGraphic = s.createGraphics(s.width, s.height)
