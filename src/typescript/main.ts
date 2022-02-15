@@ -50,7 +50,7 @@ function startSketch (s: p5): void {
 
   const canvasWidth = window.innerWidth
   const canvasHeight = window.innerHeight
-  const backgroundColor = colorRamp.dark[8]
+  let backgroundColor = s.color(255, 255, 255)
 
   const sentence = s.random(sentences)
   const sentenceArr = sentence.split(' ') as string[]
@@ -106,6 +106,8 @@ function startSketch (s: p5): void {
     fontSize = s.map(sentence.length, 80, 180, 50, 30)
     initGraphic(s)
 
+    backgroundColor = s.color(0, 0, 100)
+
     leftOffset = s.width / 10
     rightOffset = s.width / 10
     topOffset = s.height / 10
@@ -116,16 +118,17 @@ function startSketch (s: p5): void {
   function initGraphic (graphic: p5): p5 {
     graphic.colorMode(s.HSL, 360, 100, 100, 100)
     graphic.ellipseMode(s.CENTER)
+    graphic.rectMode(s.CENTER)
     graphic.textSize(fontSize)
     graphic.textAlign(s.LEFT, s.CENTER)
     graphic.textFont(mainFont)
+    graphic.angleMode(s.DEGREES)
   }
 
   let textY = fontSize + textMargin
   const allLineGraphics = [] as p5[]
   s.draw = () => {
-    // s.background(backgroundColor[0], backgroundColor[1] * 0, backgroundColor[2] * 100)
-    s.background(0, 0, 100)
+    s.background(backgroundColor)
 
     calculateLines()
     drawAllLines()
@@ -144,8 +147,8 @@ function startSketch (s: p5): void {
     const lineGap = boundingBox.h / allLineGraphics.length
     for (let i = 0; i < allLineGraphics.length; i++) {
       const graphic = allLineGraphics[i]
-      const y = boundingBox.y + i * lineGap
-      s.image(graphic, 0, y + leading / 2)
+      const y = (boundingBox.y + i * lineGap + leading / 2) - topOffset
+      s.image(graphic, 0, y)
     }
   }
 
@@ -154,10 +157,11 @@ function startSketch (s: p5): void {
     const textColor = s.color('#000')
     const startColor = s.color(colorRamp.light[0][0], colorRamp.light[0][1] * 100, colorRamp.light[0][2] * 100)
     const endColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
+    const shapeType = 'Half Circle'
 
     // Establish base values for lines
     textY = fontSize + textMargin
-    let circleBounds = {
+    let shapeBounds = {
       x: leftOffset,
       y: textY,
       w: 0,
@@ -169,8 +173,8 @@ function startSketch (s: p5): void {
     for (let i = 0; i < jumbledArr.length; i++) {
       const txt = jumbledArr[i].trim()
       const nextTxt = i < jumbledArr.length - 1 ? jumbledArr[i + 1].trim() : ''
-      const textX = i === 0 ? circleBounds.x + circleBounds.w : circleBounds.x + circleBounds.w + fontSize / 2
-      const circleRadius = fontSize / 2
+      const textX = i === 0 ? shapeBounds.x + shapeBounds.w : shapeBounds.x + shapeBounds.w + fontSize / 2
+      const shapeRadius = fontSize / 2
 
       // Simulate the text we're about to write
       const simulatedBox = drawText({
@@ -196,71 +200,74 @@ function startSketch (s: p5): void {
           graphics: activeLineGraphic
         })
       }
-      let baseCircleX = shouldSkipText ? simulatedBox.x + circleRadius : simulatedBox.x + simulatedBox.w + fontSize
-      let baseCircleY = simulatedBox.y + simulatedBox.h / 2
-      let circleCount = s.random(50, s.width / 3)
-      // Draw circles now if we have skipped the text, else just simulate them so we can make sure we don't go off bounds
-      circleBounds = drawCircles({
-        baseX: baseCircleX,
-        baseY: baseCircleY,
-        circleCount,
-        circleRadius,
+      let baseShapeX = shouldSkipText ? simulatedBox.x + shapeRadius : simulatedBox.x + simulatedBox.w + fontSize
+      let baseShapeY = simulatedBox.y + simulatedBox.h / 2
+      let totalShapeWidth = s.random(50, s.width / 3)
+      // Draw shapes now if we have skipped the text, else just simulate them so we can make sure we don't go off bounds
+      shapeBounds = drawShapes({
+        baseX: baseShapeX,
+        baseY: baseShapeY,
+        totalShapeWidth,
+        shapeRadius,
         startColor,
         endColor,
         graphics: activeLineGraphic,
-        isSimulation: !shouldSkipText
+        isSimulation: !shouldSkipText,
+        shapeType
       })
 
       if (shouldSkipText) {
-        // If we skipped text, we want to draw it now after the circles we just drew
+        // If we skipped text, we want to draw it now after the shapes we just drew
         const skippedTextBox = drawText({
           txt,
-          baseX: circleBounds.x + circleBounds.w + fontSize / 2,
+          baseX: shapeBounds.x + shapeBounds.w + fontSize / 2,
           baseY: textY,
           color: textColor,
           font: mainFont,
           graphics: activeLineGraphic
         })
-        // And then we draw circles once again
-        baseCircleX = skippedTextBox.x + skippedTextBox.w + fontSize
-        baseCircleY = skippedTextBox.y + skippedTextBox.h / 2
-        circleBounds = drawCircles({
-          baseX: baseCircleX,
-          baseY: baseCircleY,
-          circleCount,
-          circleRadius,
+        // And then we draw shapes once again
+        baseShapeX = skippedTextBox.x + skippedTextBox.w + fontSize
+        baseShapeY = skippedTextBox.y + skippedTextBox.h / 2
+        shapeBounds = drawShapes({
+          baseX: baseShapeX,
+          baseY: baseShapeY,
+          totalShapeWidth,
+          shapeRadius,
           startColor: s.color('red'),
           endColor: s.color('green'),
           graphics: activeLineGraphic,
-          isSimulation: true
+          isSimulation: true,
+          shapeType
         })
       }
       // Simulate the next piece of text to find out if it's going to go out of bounds
       const simulatedNextTextBox = drawText({
         txt: nextTxt,
-        baseX: circleBounds.x + circleBounds.w + fontSize,
+        baseX: shapeBounds.x + shapeBounds.w + fontSize,
         baseY: textY,
         color: textColor,
         font: mainFont,
         isSimulation: true
       })
 
-      // If the next text was going to be out of bounds, we fill with circles
+      // If the next text was going to be out of bounds, we fill with shapes
       if (simulatedNextTextBox.wentOutOfBounds) {
-        circleCount = s.width - baseCircleX - rightOffset - circleRadius
-      } else if (circleBounds.x + circleBounds.w > s.width - rightOffset) {
-        // If the circles were going to go out of bounds, we make sure not to go out of bounds
-        circleCount = s.width - rightOffset - circleBounds.x
+        totalShapeWidth = s.width - baseShapeX - rightOffset - shapeRadius
+      } else if (shapeBounds.x + shapeBounds.w > s.width - rightOffset) {
+        // If the shapes were going to go out of bounds, we make sure not to go out of bounds
+        totalShapeWidth = s.width - rightOffset - shapeBounds.x
       }
-      if (circleCount > 0) {
-        circleBounds = drawCircles({
-          baseX: baseCircleX,
-          baseY: baseCircleY,
-          circleCount,
-          circleRadius,
+      if (totalShapeWidth > 0) {
+        shapeBounds = drawShapes({
+          baseX: baseShapeX,
+          baseY: baseShapeY,
+          totalShapeWidth,
+          shapeRadius,
           startColor,
           endColor,
-          graphics: activeLineGraphic
+          graphics: activeLineGraphic,
+          shapeType
         })
       }
 
@@ -285,7 +292,7 @@ function startSketch (s: p5): void {
       opts.graphics.fill(opts.color)
       opts.graphics.noStroke()
       const leading = opts.graphics.textLeading()
-      opts.graphics.text(opts.txt, opts.baseX, (leading - fontSize) * 1.5)
+      opts.graphics.text(opts.txt, opts.baseX, topOffset + (leading - fontSize) * 1.5)
     }
     return {
       ...textBox,
@@ -293,25 +300,36 @@ function startSketch (s: p5): void {
     }
   }
 
-  function drawCircles (opts: DrawCirclesOpts): RectBounds {
-    const startX = opts.baseX - opts.circleRadius
+  function drawShapes (opts: DrawShapesOpts): RectBounds {
+    const startX = opts.baseX - opts.shapeRadius
     let finalX = 0
     s.colorMode(s.RGB)
-    for (let i = 0; i < opts.circleCount; i++) {
-      const lerpVal = s.map(i, 0, opts.circleCount, 0, 1)
+    const incrementer = 2
+    for (let i = 0; i < opts.totalShapeWidth; i += incrementer) {
+      const lerpVal = s.map(i, 0, opts.totalShapeWidth, 0, 1)
       const interColor = s.lerpColor(opts.startColor, opts.endColor, lerpVal)
       if (!opts.isSimulation && opts.graphics !== undefined) {
-        opts.graphics.fill(interColor)
-        opts.graphics.noStroke()
-        opts.graphics.ellipse(opts.baseX + i, opts.circleRadius, opts.circleRadius * 2)
+        opts.graphics.stroke(interColor)
+        opts.graphics.noFill()
+        opts.graphics.push()
+        opts.graphics.translate(opts.baseX + i, topOffset + opts.shapeRadius)
+        opts.graphics.rotate(45 - i)
+        if (opts.shapeType === 'Ellipse') {
+          opts.graphics.ellipse(0, 0, opts.shapeRadius * 2, opts.shapeRadius)
+        } else if (opts.shapeType === 'Diamond') {
+          opts.graphics.rect(0, 0, opts.shapeRadius * 2)
+        } else if (opts.shapeType === 'Half Circle') {
+          opts.graphics.arc(0, 0, opts.shapeRadius * 2, opts.shapeRadius * 2, 0, 180, s.PIE)
+        }
+        opts.graphics.pop()
       }
-      finalX = opts.baseX + i + opts.circleRadius
+      finalX = opts.baseX + i + opts.shapeRadius
     }
     return {
       x: startX,
-      y: opts.baseY - opts.circleRadius,
+      y: opts.baseY - opts.shapeRadius,
       w: finalX - startX,
-      h: opts.circleRadius * 2
+      h: opts.shapeRadius * 2
     }
   }
 }
