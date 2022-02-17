@@ -18,21 +18,54 @@ const initialRand: number = fxrand() * 999999
 // const initialRand: number = 301189.93446179386
 console.log('initialRand', initialRand)
 
+function findShapeType (): string {
+  const shapeRandom = fxrand()
+  if (shapeRandom > 0.8) {
+    return 'Hexagon'
+  } else if (shapeRandom > 0.6) {
+    return 'Ellipse'
+  } else if (shapeRandom > 0.4) {
+    return 'Diamond'
+  } else {
+    return 'Line'
+  }
+}
+
+function getBackgroundType (): string {
+  const bgRandom = fxrand()
+  if (bgRandom > 0.85) {
+    return 'Reverse'
+  } else {
+    return 'Regular'
+  }
+}
+
+window.$fxhashFeatures = {
+  Shape: fxrand() > 0.1 ? findShapeType() : 'Mix',
+  Background: getBackgroundType()
+}
+
 const fettepaletteSettings = {
   total: 9,
   centerHue: fxrand() * 360,
-  hueCycle: fxrand(),
+  hueCycle: window.$fxhashFeatures.Background === 'Reverse' ? 0.75 + fxrand() * 0.25 : fxrand(),
   curveMethod: 'lame',
   // curveMethod: 'powX',
-  curveAccent: fxrand(),
+  curveAccent: window.$fxhashFeatures.Background === 'Reverse' ? 0.75 + fxrand() * 0.25 : fxrand(),
   // curveAccent: 0.5,
   offsetTint: 0.01,
   offsetShade: 0.01,
   tintShadeHueShift: 0.01,
   offsetCurveModTint: 0.03,
   offsetCurveModShade: 0.03,
-  minSaturationLight: [0, 0],
-  maxSaturationLight: [1, 1]
+  minSaturationLight: [
+    window.$fxhashFeatures.Background === 'Reverse' ? 0.5 : 0,
+    0
+  ],
+  maxSaturationLight: [
+    1,
+    1
+  ]
 }
 console.log(fettepaletteSettings)
 const colorRamp = fettepalette.generateRandomColorRamp(fettepaletteSettings)
@@ -51,6 +84,10 @@ function startSketch (s: p5): void {
   const canvasWidth = window.innerWidth
   const canvasHeight = window.innerHeight
   let backgroundColor = s.color(255, 255, 255)
+  let backgroundColorEnd = s.color(255, 255, 255)
+  let textColor = s.color('#000')
+  let startColor = s.color(colorRamp.light[0][0], colorRamp.light[0][1] * 100, colorRamp.light[0][2] * 100)
+  let endColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
 
   const sentence = s.random(sentences)
   /* let sentence = ''
@@ -116,7 +153,19 @@ function startSketch (s: p5): void {
     fontSize = s.map(sentence.length, 80, 180, maxFontSize, minFontSize, true)
     initGraphic(s)
 
-    backgroundColor = s.color(0, 0, 100)
+    if (window.$fxhashFeatures.Background === 'Regular') {
+      backgroundColor = s.color(0, 0, 100)
+      backgroundColorEnd = s.color(0, 0, 100)
+      textColor = s.color('#000')
+      startColor = s.color(colorRamp.light[0][0], colorRamp.light[0][1] * 100, colorRamp.light[0][2] * 100)
+      endColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
+    } else {
+      backgroundColor = s.color(colorRamp.dark[0][0], colorRamp.dark[0][1] * 100, colorRamp.dark[0][2] * 100)
+      backgroundColorEnd = s.color(colorRamp.base[1][0], colorRamp.base[1][1] * 100, colorRamp.base[1][2] * 100)
+      startColor = s.color(colorRamp.light[7][0], colorRamp.light[7][1] * 100, colorRamp.light[7][2] * 100)
+      endColor = s.color(colorRamp.base[6][0], colorRamp.base[6][1] * 100, colorRamp.base[6][2] * 100)
+      textColor = s.color('#fff')
+    }
 
     leftOffset = s.width / 10
     rightOffset = s.width / 10
@@ -145,7 +194,16 @@ function startSketch (s: p5): void {
   let textY = fontSize + textMargin
   const allLineGraphics = [] as p5[]
   s.draw = () => {
-    s.background(backgroundColor)
+    // s.background(backgroundColor)
+    s.colorMode(s.RGB)
+    for (let i = 0; i < s.height; i++) {
+      const lerpVal = s.map(i, 0, s.height, 0, 1)
+      const interColor = s.lerpColor(backgroundColor, backgroundColorEnd, lerpVal)
+      s.stroke(interColor)
+      s.noFill()
+      s.line(0, i, s.width, i)
+    }
+    s.colorMode(s.HSL, 360, 100, 100)
 
     calculateLines()
     drawAllLines()
@@ -175,25 +233,8 @@ function startSketch (s: p5): void {
     }
   }
 
-  function findShapeType (): string {
-    const shapeRandom = s.random()
-    if (shapeRandom > 0.8) {
-      return 'Hexagon'
-    } else if (shapeRandom > 0.6) {
-      return 'Ellipse'
-    } else if (shapeRandom > 0.4) {
-      return 'Diamond'
-    } else {
-      return 'Line'
-    }
-  }
-
   function calculateLines (): void {
-    // Find colors
-    const textColor = s.color('#000')
-    const startColor = s.color(colorRamp.light[0][0], colorRamp.light[0][1] * 100, colorRamp.light[0][2] * 100)
-    const endColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
-    const shapeType = s.random() > 0.1 ? findShapeType() : 'Mix'
+    const shapeType = window.$fxhashFeatures.Shape
 
     // Establish base values for lines
     textY = fontSize + textMargin
