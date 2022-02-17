@@ -11,7 +11,8 @@ interface DrawShapesOpts {
 }
 
 enum ShapeType {
-  Circle = 'Ellipse',
+  Ellipse = 'Ellipse',
   Diamond = 'Diamond',
-  HalfCircle = 'Half Circle'
+  Hexagon = 'Hexagon',
+  Line = 'Line'
 }

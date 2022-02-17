@@ -1,7 +1,8 @@
 var ShapeType;
 (function (ShapeType) {
-    ShapeType["Circle"] = "Ellipse";
+    ShapeType["Ellipse"] = "Ellipse";
     ShapeType["Diamond"] = "Diamond";
-    ShapeType["HalfCircle"] = "Half Circle";
+    ShapeType["Hexagon"] = "Hexagon";
+    ShapeType["Line"] = "Line";
 })(ShapeType || (ShapeType = {}));
 //# sourceMappingURL=DrawShapesOpts.js.map

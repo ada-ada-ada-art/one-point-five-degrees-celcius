@@ -15,7 +15,7 @@ Licensed under CC BY-NC-SA 4.0.
 Built with p5.js.`)
 
 const initialRand: number = fxrand() * 999999
-// const initialRand: number = 26413.259924342623
+// const initialRand: number = 301189.93446179386
 console.log('initialRand', initialRand)
 
 const fettepaletteSettings = {
@@ -24,7 +24,7 @@ const fettepaletteSettings = {
   hueCycle: fxrand(),
   curveMethod: 'lame',
   // curveMethod: 'powX',
-  curveAccent: 0,
+  curveAccent: fxrand(),
   // curveAccent: 0.5,
   offsetTint: 0.01,
   offsetShade: 0.01,
@@ -53,6 +53,11 @@ function startSketch (s: p5): void {
   let backgroundColor = s.color(255, 255, 255)
 
   const sentence = s.random(sentences)
+  /* let sentence = ''
+  const sklurtCount = s.random(20, 40)
+  for (let i = 0; i < sklurtCount; i++) {
+    sentence += 'sklurt '
+  } */
   const sentenceArr = sentence.split(' ') as string[]
   const jumbledArr = [] as string[]
   // We set a limit for the string, so we don't have to deal with splitting a too long string and move to next line and shit
@@ -101,9 +106,14 @@ function startSketch (s: p5): void {
     // mainFont = s.loadFont('./public/fonts/Inter-Bold.otf')
   }
 
+  const synth = window.speechSynthesis
+  let voices = [] as SpeechSynthesisVoice[]
+
   s.setup = () => {
     s.createCanvas(canvasWidth, canvasHeight)
-    fontSize = s.map(sentence.length, 80, 180, 50, 30)
+    const minFontSize = s.map(s.width, 200, 1920, 10, 20, true)
+    const maxFontSize = s.map(s.width, 200, 1920, 20, 50, true)
+    fontSize = s.map(sentence.length, 80, 180, maxFontSize, minFontSize, true)
     initGraphic(s)
 
     backgroundColor = s.color(0, 0, 100)
@@ -113,6 +123,13 @@ function startSketch (s: p5): void {
     topOffset = s.height / 10
     bottomOffset = s.height / 10
     textMargin = s.height / jumbledArr.length
+
+    voices = synth.getVoices()
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = () => {
+        voices = synth.getVoices()
+      }
+    }
   }
 
   function initGraphic (graphic: p5): p5 {
@@ -136,6 +153,12 @@ function startSketch (s: p5): void {
     s.noLoop()
   }
 
+  s.mousePressed = () => {
+    const utterThis = new SpeechSynthesisUtterance(sentence)
+    utterThis.voice = voices.find((vo) => vo.default)
+    synth.speak(utterThis)
+  }
+
   function drawAllLines (): void {
     const boundingBox: RectBounds = {
       x: leftOffset,
@@ -152,12 +175,25 @@ function startSketch (s: p5): void {
     }
   }
 
+  function findShapeType (): string {
+    const shapeRandom = s.random()
+    if (shapeRandom > 0.8) {
+      return 'Hexagon'
+    } else if (shapeRandom > 0.6) {
+      return 'Ellipse'
+    } else if (shapeRandom > 0.4) {
+      return 'Diamond'
+    } else {
+      return 'Line'
+    }
+  }
+
   function calculateLines (): void {
     // Find colors
     const textColor = s.color('#000')
     const startColor = s.color(colorRamp.light[0][0], colorRamp.light[0][1] * 100, colorRamp.light[0][2] * 100)
     const endColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
-    const shapeType = 'Half Circle'
+    const shapeType = s.random() > 0.1 ? findShapeType() : 'Mix'
 
     // Establish base values for lines
     textY = fontSize + textMargin
@@ -202,7 +238,7 @@ function startSketch (s: p5): void {
       }
       let baseShapeX = shouldSkipText ? simulatedBox.x + shapeRadius : simulatedBox.x + simulatedBox.w + fontSize
       let baseShapeY = simulatedBox.y + simulatedBox.h / 2
-      let totalShapeWidth = s.random(50, s.width / 3)
+      let totalShapeWidth = s.random(s.width / 10, s.width / 5)
       // Draw shapes now if we have skipped the text, else just simulate them so we can make sure we don't go off bounds
       shapeBounds = drawShapes({
         baseX: baseShapeX,
@@ -305,6 +341,8 @@ function startSketch (s: p5): void {
     let finalX = 0
     s.colorMode(s.RGB)
     const incrementer = 2
+    if (opts.shapeType === 'Mix') opts.shapeType = findShapeType()
+    const startRotation = s.random(0, 180)
     for (let i = 0; i < opts.totalShapeWidth; i += incrementer) {
       const lerpVal = s.map(i, 0, opts.totalShapeWidth, 0, 1)
       const interColor = s.lerpColor(opts.startColor, opts.endColor, lerpVal)
@@ -313,13 +351,31 @@ function startSketch (s: p5): void {
         opts.graphics.noFill()
         opts.graphics.push()
         opts.graphics.translate(opts.baseX + i, topOffset + opts.shapeRadius)
-        opts.graphics.rotate(45 - i)
         if (opts.shapeType === 'Ellipse') {
+          opts.graphics.rotate(startRotation - i)
           opts.graphics.ellipse(0, 0, opts.shapeRadius * 2, opts.shapeRadius)
         } else if (opts.shapeType === 'Diamond') {
-          opts.graphics.rect(0, 0, opts.shapeRadius * 2)
-        } else if (opts.shapeType === 'Half Circle') {
-          opts.graphics.arc(0, 0, opts.shapeRadius * 2, opts.shapeRadius * 2, 0, 180, s.PIE)
+          opts.graphics.rotate(startRotation - i)
+          opts.graphics.rect(0, 0, opts.shapeRadius * 1.5)
+        } else if (opts.shapeType === 'Hexagon') {
+          opts.graphics.rotate(startRotation - i)
+          opts.graphics.beginShape()
+          const corners = 6
+          for (let j = 0; j < s.TWO_PI; j += (s.TWO_PI / corners)) {
+            const x = Math.cos(j) * opts.shapeRadius
+            const y = Math.sin(j) * opts.shapeRadius
+            opts.graphics.vertex(x, y)
+          }
+          opts.graphics.endShape(s.CLOSE)
+        } else if (opts.shapeType === 'Line') {
+          opts.graphics.rotate(i * 3)
+          opts.graphics.beginShape()
+          for (let j = 0; j < s.TWO_PI; j += s.PI) {
+            const x = Math.cos(j) * opts.shapeRadius
+            const y = Math.sin(j) * opts.shapeRadius
+            opts.graphics.vertex(x, y)
+          }
+          opts.graphics.endShape(s.CLOSE)
         }
         opts.graphics.pop()
       }
