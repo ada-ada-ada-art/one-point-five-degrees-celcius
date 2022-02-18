@@ -15,16 +15,16 @@ Licensed under CC BY-NC-SA 4.0.
 Built with p5.js.`)
 
 const initialRand: number = fxrand() * 999999
-// const initialRand: number = 301189.93446179386
+// const initialRand: number = 380338.18673768383
 console.log('initialRand', initialRand)
 
 function findShapeType (): string {
-  const shapeRandom = fxrand()
-  if (shapeRandom > 0.8) {
+  const rand = fxrand()
+  if (rand > 0.8) {
     return 'Hexagon'
-  } else if (shapeRandom > 0.6) {
+  } else if (rand > 0.6) {
     return 'Ellipse'
-  } else if (shapeRandom > 0.4) {
+  } else if (rand > 0.4) {
     return 'Diamond'
   } else {
     return 'Line'
@@ -32,26 +32,40 @@ function findShapeType (): string {
 }
 
 function getBackgroundType (): string {
-  const bgRandom = fxrand()
-  if (bgRandom > 0.85) {
+  const rand = fxrand()
+  if (rand > 0.875) {
+    return 'Regular'
+  } else if (rand > 0.5) {
     return 'Reverse'
   } else {
-    return 'Regular'
+    return 'Dark'
+  }
+}
+
+function getSpecialText (): string {
+  const rand = fxrand()
+  if (rand < 0.95) {
+    return 'None'
+  } else if (rand > 0.975) {
+    return 'Real'
+  } else {
+    return 'Firehouse'
   }
 }
 
 window.$fxhashFeatures = {
   Shape: fxrand() > 0.1 ? findShapeType() : 'Mix',
-  Background: getBackgroundType()
+  Background: getBackgroundType(),
+  'Special text': getSpecialText()
 }
 
 const fettepaletteSettings = {
   total: 9,
-  centerHue: fxrand() * 360,
-  hueCycle: window.$fxhashFeatures.Background === 'Reverse' ? 0.75 + fxrand() * 0.25 : fxrand(),
+  centerHue: window.$fxhashFeatures.Background === 'Reverse' ? (345 + fxrand() * 180) % 360 : fxrand() * 360,
+  hueCycle: fxrand(),
   curveMethod: 'lame',
   // curveMethod: 'powX',
-  curveAccent: window.$fxhashFeatures.Background === 'Reverse' ? 0.75 + fxrand() * 0.25 : fxrand(),
+  curveAccent: window.$fxhashFeatures.Background === 'Reverse' ? 0.5 : fxrand(),
   // curveAccent: 0.5,
   offsetTint: 0.01,
   offsetShade: 0.01,
@@ -59,12 +73,12 @@ const fettepaletteSettings = {
   offsetCurveModTint: 0.03,
   offsetCurveModShade: 0.03,
   minSaturationLight: [
-    window.$fxhashFeatures.Background === 'Reverse' ? 0.5 : 0,
+    0,
     0
   ],
   maxSaturationLight: [
-    1,
-    1
+    window.$fxhashFeatures.Background === 'Reverse' ? 0.7 : 1,
+    window.$fxhashFeatures.Background === 'Reverse' ? 0.7 : 1
   ]
 }
 console.log(fettepaletteSettings)
@@ -84,18 +98,23 @@ function startSketch (s: p5): void {
   const canvasWidth = window.innerWidth
   const canvasHeight = window.innerHeight
   let backgroundColor = s.color(255, 255, 255)
-  let backgroundColorEnd = s.color(255, 255, 255)
   let textColor = s.color('#000')
   let startColor = s.color(colorRamp.light[0][0], colorRamp.light[0][1] * 100, colorRamp.light[0][2] * 100)
   let endColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
 
-  const sentence = s.random(sentences)
-  /* let sentence = ''
-  const sklurtCount = s.random(20, 40)
-  for (let i = 0; i < sklurtCount; i++) {
-    sentence += 'sklurt '
-  } */
-  const sentenceArr = sentence.split(' ') as string[]
+  let sentence: string = s.random(sentences)
+  if (window.$fxhashFeatures['Special text'] === 'Firehouse') {
+    sentence = 'Our house is on fire.'
+    for (let i = 0; i < 4; i++) {
+      sentence += ' Our house is on fire.'
+    }
+  } else if (window.$fxhashFeatures['Special text'] === 'Real') {
+    sentence = 'The climate crisis is real.'
+    for (let i = 0; i < 4; i++) {
+      sentence += ' The climate crisis is real.'
+    }
+  }
+  const sentenceArr = sentence.split(' ')
   const jumbledArr = [] as string[]
   // We set a limit for the string, so we don't have to deal with splitting a too long string and move to next line and shit
   const maxStringLength = 20
@@ -104,7 +123,7 @@ function startSketch (s: p5): void {
     const str = `${prev} ${cur}`
     let shouldMakePitStop = str.length > maxStringLength
     // Throw a dice to see if we want to add more text
-    if (rand > 0.5 && idx !== 0) {
+    if (!shouldMakePitStop && rand > 0.3 && idx !== 0) {
       if (idx === arr.length - 1) {
         jumbledArr.push(`${prev} ${cur}`.trim())
         return cur
@@ -117,7 +136,7 @@ function startSketch (s: p5): void {
       }
     }
     if (shouldMakePitStop) {
-      jumbledArr.push(`${prev}`.trim())
+      if (prev !== '') jumbledArr.push(`${prev}`.trim())
       // If we're at the last word, add that one as well as a separate entry
       if (idx === arr.length - 1) {
         jumbledArr.push(`${cur}`.trim())
@@ -137,10 +156,24 @@ function startSketch (s: p5): void {
   let textMargin = s.height / jumbledArr.length
   let fontSize = 30
   let mainFont: p5.Font
+  let labelFont: p5.Font
 
   s.preload = () => {
+    // mainFont = s.loadFont('./public/fonts/Inter-Light.otf')
+    // labelFont = s.loadFont('./public/fonts/Inter-Bold.otf')
+
     mainFont = s.loadFont('./public/fonts/Inter-Light.otf')
-    // mainFont = s.loadFont('./public/fonts/Inter-Bold.otf')
+    labelFont = s.loadFont('./public/fonts/Inter-Bold.otf')
+
+    // mainFont = s.loadFont('./public/fonts/Inter-Black.otf')
+    // mainFont = s.loadFont('./public/fonts/Inter-ExtraBold.otf')
+
+    // mainFont = s.loadFont('./public/fonts/HomemadeApple-Regular.otf')
+    // mainFont = s.loadFont('./public/fonts/PermanentMarker-Regular.otf')
+    // mainFont = s.loadFont('./public/fonts/PressStart2P-Regular.otf')
+    mainFont = s.loadFont('./public/fonts/SpecialElite-Regular.otf')
+
+    labelFont = mainFont
   }
 
   const synth = window.speechSynthesis
@@ -154,17 +187,20 @@ function startSketch (s: p5): void {
     initGraphic(s)
 
     if (window.$fxhashFeatures.Background === 'Regular') {
-      backgroundColor = s.color(0, 0, 100)
-      backgroundColorEnd = s.color(0, 0, 100)
+      backgroundColor = s.color(0, 0, 70)
       textColor = s.color('#000')
       startColor = s.color(colorRamp.light[0][0], colorRamp.light[0][1] * 100, colorRamp.light[0][2] * 100)
       endColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
-    } else {
-      backgroundColor = s.color(colorRamp.dark[0][0], colorRamp.dark[0][1] * 100, colorRamp.dark[0][2] * 100)
-      backgroundColorEnd = s.color(colorRamp.base[1][0], colorRamp.base[1][1] * 100, colorRamp.base[1][2] * 100)
+    } else if (window.$fxhashFeatures.Background === 'Dark') {
+      backgroundColor = s.color(0, 0, 10)
       startColor = s.color(colorRamp.light[7][0], colorRamp.light[7][1] * 100, colorRamp.light[7][2] * 100)
       endColor = s.color(colorRamp.base[6][0], colorRamp.base[6][1] * 100, colorRamp.base[6][2] * 100)
       textColor = s.color('#fff')
+    } else {
+      backgroundColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
+      startColor = s.color(colorRamp.base[4][0], 100, 40)
+      endColor = s.color(colorRamp.base[4][0], 100, 90)
+      textColor = s.color(0, 0, 100)
     }
 
     leftOffset = s.width / 10
@@ -194,27 +230,38 @@ function startSketch (s: p5): void {
   let textY = fontSize + textMargin
   const allLineGraphics = [] as p5[]
   s.draw = () => {
-    // s.background(backgroundColor)
-    s.colorMode(s.RGB)
-    for (let i = 0; i < s.height; i++) {
-      const lerpVal = s.map(i, 0, s.height, 0, 1)
-      const interColor = s.lerpColor(backgroundColor, backgroundColorEnd, lerpVal)
-      s.stroke(interColor)
-      s.noFill()
-      s.line(0, i, s.width, i)
-    }
+    s.background(backgroundColor)
     s.colorMode(s.HSL, 360, 100, 100)
 
-    calculateLines()
+    prepareLines()
     drawAllLines()
+    drawLabels()
+
+    dither(s, 'floydsteinberg')
 
     s.noLoop()
   }
 
-  s.mousePressed = () => {
+  s.doubleClicked = () => {
     const utterThis = new SpeechSynthesisUtterance(sentence)
     utterThis.voice = voices.find((vo) => vo.default)
     synth.speak(utterThis)
+  }
+
+  function drawLabels (): void {
+    const labelFontSize = 15
+    s.textFont(labelFont)
+    s.textSize(labelFontSize)
+    s.stroke(textColor)
+    const lineY = s.height - bottomOffset - labelFontSize
+    s.line(leftOffset, lineY, leftOffset * 2, lineY)
+    s.line(s.width - rightOffset, lineY, s.width - rightOffset * 2, lineY)
+    s.noStroke()
+    s.fill(textColor)
+    s.textAlign(s.LEFT)
+    s.text('1.5°C', leftOffset, s.height - bottomOffset)
+    s.textAlign(s.RIGHT)
+    s.text(`#${fxhash.slice(2, 8).toUpperCase()}`, s.width - rightOffset, s.height - bottomOffset)
   }
 
   function drawAllLines (): void {
@@ -233,7 +280,7 @@ function startSketch (s: p5): void {
     }
   }
 
-  function calculateLines (): void {
+  function prepareLines (): void {
     const shapeType = window.$fxhashFeatures.Shape
 
     // Establish base values for lines
@@ -429,4 +476,74 @@ function startSketch (s: p5): void {
       h: opts.shapeRadius * 2
     }
   }
+}
+
+// Adapted (poorly with great glitchy effect) from p5.riso's dither implementation: https://github.com/antiboredom/p5.riso
+function dither (s: p5, type: string, threshold: number): void {
+  // source adapted from: https://github.com/meemoo/meemooapp/blob/44236a29574812026407c0288ab15390e88b556a/src/nodes/image-monochrome-worker.js
+
+  if (threshold === undefined) threshold = 128
+
+  const w = s.width
+  let newPixel, err
+
+  const bayerThresholdMap = [
+    [15, 135, 45, 165],
+    [195, 75, 225, 105],
+    [60, 180, 30, 150],
+    [240, 120, 210, 90]
+  ]
+
+  const lumR = []
+  const lumG = []
+  const lumB = []
+
+  s.loadPixels()
+
+  for (let i = 0; i < 256; i++) {
+    lumR[i] = i * 0.299
+    lumG[i] = i * 0.587
+    lumB[i] = i * 0.114
+  }
+
+  for (let i = 0; i <= s.pixels.length; i += 4) {
+    s.pixels[i] = Math.floor(lumR[s.pixels[i]] + lumG[s.pixels[i + 1]] + lumB[s.pixels[i + 2]])
+  }
+
+  const floydsteinbergThreshold = fxrand() * 129
+  for (let i = 0; i <= s.pixels.length; i += 4) {
+    if (type === 'none') {
+      // No dithering
+      s.pixels[i] = s.pixels[i] < threshold ? 0 : 255
+    } else if (type === 'bayer') {
+      // 4x4 Bayer ordered dithering algorithm
+      const x = i / 4 % w
+      const y = Math.floor(i / 4 / w)
+      const map = Math.floor((s.pixels[i] + bayerThresholdMap[x % 4][y % 4]) / 2)
+      s.pixels[i] = (map < threshold) ? 0 : 255
+    } else if (type === 'floydsteinberg') {
+      // Floyd–Steinberg dithering algorithm
+      newPixel = s.pixels[i] < floydsteinbergThreshold ? 0 : 255
+      err = Math.floor((s.pixels[i] - newPixel) / 16)
+      s.pixels[i] = newPixel
+      s.pixels[i + 4] += err * 7
+      s.pixels[i + 4 * w - 4] += err * 3
+      s.pixels[i + 4 * w] += err * 5
+      s.pixels[i + 4 * w + 4] += err * 1
+    } else {
+      // Bill Atkinson's dithering algorithm
+      newPixel = s.pixels[i] < 129 ? 0 : 255
+      err = Math.floor((s.pixels[i] - newPixel) / 8)
+      s.pixels[i] = newPixel
+
+      s.pixels[i + 4] += err
+      s.pixels[i + 8] += err
+      s.pixels[i + 4 * w - 4] += err
+      s.pixels[i + 4 * w] += err
+      s.pixels[i + 4 * w + 4] += err
+      s.pixels[i + 8 * w] += err
+    }
+  }
+  s.updatePixels()
+  // return out
 }
