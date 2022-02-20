@@ -34,11 +34,11 @@ function findShapeType (): string {
 function getBackgroundType (): string {
   const rand = fxrand()
   if (rand > 0.875) {
-    return 'Regular'
+    return 'Dark'
   } else if (rand > 0.5) {
     return 'Reverse'
   } else {
-    return 'Dark'
+    return 'Regular'
   }
 }
 
@@ -53,10 +53,49 @@ function getSpecialText (): string {
   }
 }
 
+let strikethroughThreshold = 0.5
+let shakyLineThreshold = 0.5
+function getCensorshipType (): string {
+  const rand = fxrand()
+  if (rand > 0.95) {
+    strikethroughThreshold = 1
+    shakyLineThreshold = 1
+    return 'None'
+  } else if (rand > 0.8) {
+    strikethroughThreshold = 0.5
+    shakyLineThreshold = 0.5
+    return '50/50'
+  } else {
+    strikethroughThreshold = 0.8
+    shakyLineThreshold = 0.8
+    return '80/20'
+  }
+}
+
+let ditherEffect = 'atkinson'
+function getDitherEffect (): string {
+  const ditherEffectRand = fxrand()
+  if (ditherEffectRand > 0.95) {
+    ditherEffect = 'none'
+    return 'None'
+  } else if (ditherEffectRand > 0.66) {
+    ditherEffect = 'bayer'
+    return 'Bayer'
+  } else if (ditherEffectRand > 0.33) {
+    ditherEffect = 'floydsteinberg'
+    return 'Floyd-Steinberg'
+  } else {
+    ditherEffect = 'atkinson'
+    return 'Atkinson'
+  }
+}
+
 window.$fxhashFeatures = {
   Shape: fxrand() > 0.1 ? findShapeType() : 'Mix',
   Background: getBackgroundType(),
-  'Special text': getSpecialText()
+  'Special text': getSpecialText(),
+  Censorship: getCensorshipType(),
+  Dithering: getDitherEffect()
 }
 
 const fettepaletteSettings = {
@@ -159,21 +198,21 @@ function startSketch (s: p5): void {
   let labelFont: p5.Font
 
   s.preload = () => {
-    // mainFont = s.loadFont('./public/fonts/Inter-Light.otf')
-    // labelFont = s.loadFont('./public/fonts/Inter-Bold.otf')
-
     mainFont = s.loadFont('./public/fonts/Inter-Light.otf')
     labelFont = s.loadFont('./public/fonts/Inter-Bold.otf')
+
+    // mainFont = s.loadFont('./public/fonts/Inter-Bold.otf')
+    // labelFont = s.loadFont('./public/fonts/Inter-Light.otf')
 
     // mainFont = s.loadFont('./public/fonts/Inter-Black.otf')
     // mainFont = s.loadFont('./public/fonts/Inter-ExtraBold.otf')
 
+    // Looks pretty, but very illegible
     // mainFont = s.loadFont('./public/fonts/HomemadeApple-Regular.otf')
-    // mainFont = s.loadFont('./public/fonts/PermanentMarker-Regular.otf')
-    // mainFont = s.loadFont('./public/fonts/PressStart2P-Regular.otf')
-    mainFont = s.loadFont('./public/fonts/SpecialElite-Regular.otf')
+    // Looks cool with dither glitch, but not alone
+    // mainFont = s.loadFont('./public/fonts/SpecialElite-Regular.otf')
 
-    labelFont = mainFont
+    // labelFont = mainFont
   }
 
   const synth = window.speechSynthesis
@@ -237,7 +276,7 @@ function startSketch (s: p5): void {
     drawAllLines()
     drawLabels()
 
-    dither(s, 'floydsteinberg')
+    dither(s, ditherEffect)
 
     s.noLoop()
   }
@@ -413,10 +452,32 @@ function startSketch (s: p5): void {
       wentOutOfBounds = true
     }
     if (!opts.isSimulation && opts.graphics !== undefined) {
+      const isStrikethrough = s.random() > strikethroughThreshold
+      const isShakyText = s.random() > shakyLineThreshold
       opts.graphics.fill(opts.color)
       opts.graphics.noStroke()
       const leading = opts.graphics.textLeading()
-      opts.graphics.text(opts.txt, opts.baseX, topOffset + (leading - fontSize) * 1.5)
+      if (!isStrikethrough && !isShakyText) {
+        opts.graphics.text(opts.txt, opts.baseX, topOffset + (leading - fontSize) * 1.5)
+      } else if (isStrikethrough) {
+        opts.graphics.text(opts.txt, opts.baseX, topOffset + (leading - fontSize) * 1.5)
+        opts.graphics.stroke(backgroundColor)
+        opts.graphics.noFill()
+        opts.graphics.strokeWeight(fontSize / 8)
+        opts.graphics.rect(textBox.x + textBox.w / 2, topOffset + leading / 2, textBox.w, 1)
+      } else {
+        const txtPoints = mainFont.textToPoints(opts.txt, opts.baseX, topOffset + (leading - fontSize / 2), fontSize, {
+          sampleFactor: 1
+        })
+        opts.graphics.stroke(opts.color)
+        opts.graphics.noFill()
+        opts.graphics.strokeWeight(1)
+        opts.graphics.beginShape()
+        for (const po of txtPoints) {
+          if (s.random() > 0.33) opts.graphics.point(po.x + s.random(), po.y + s.random())
+        }
+        opts.graphics.endShape()
+      }
     }
     return {
       ...textBox,
@@ -479,7 +540,7 @@ function startSketch (s: p5): void {
 }
 
 // Adapted (poorly with great glitchy effect) from p5.riso's dither implementation: https://github.com/antiboredom/p5.riso
-function dither (s: p5, type: string, threshold: number): void {
+function dither (s: p5, type: string, threshold?: number): void {
   // source adapted from: https://github.com/meemoo/meemooapp/blob/44236a29574812026407c0288ab15390e88b556a/src/nodes/image-monochrome-worker.js
 
   if (threshold === undefined) threshold = 128
