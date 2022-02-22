@@ -16,16 +16,19 @@ Built with p5.js.`)
 
 const initialRand: number = fxrand() * 999999
 // const initialRand: number = 380338.18673768383
-console.log('initialRand', initialRand)
 
 function findShapeType (): string {
   const rand = fxrand()
-  if (rand > 0.8) {
+  if (rand > (1 / 6) * 5) {
+    return 'Star'
+  } else if (rand > (1 / 6) * 4) {
     return 'Hexagon'
-  } else if (rand > 0.6) {
+  } else if (rand > (1 / 6) * 3) {
     return 'Ellipse'
-  } else if (rand > 0.4) {
-    return 'Diamond'
+  } else if (rand > (1 / 6) * 2) {
+    return 'Square'
+  } else if (rand > (1 / 6) * 1) {
+    return 'Chaos'
   } else {
     return 'Line'
   }
@@ -44,12 +47,14 @@ function getBackgroundType (): string {
 
 function getSpecialText (): string {
   const rand = fxrand()
-  if (rand < 0.95) {
+  if (rand < 0.94) {
     return 'None'
-  } else if (rand > 0.975) {
+  } else if (rand < 0.96) {
     return 'Real'
-  } else {
+  } else if (rand < 0.98) {
     return 'Firehouse'
+  } else {
+    return 'Delay'
   }
 }
 
@@ -74,14 +79,14 @@ function getCensorshipType (): string {
 
 let ditherEffect = 'atkinson'
 function getDitherEffect (): string {
-  const ditherEffectRand = fxrand()
-  if (ditherEffectRand > 0.95) {
+  const rand = fxrand()
+  if (rand > 0.95) {
     ditherEffect = 'none'
     return 'None'
-  } else if (ditherEffectRand > 0.66) {
+  } else if (rand > 0.66) {
     ditherEffect = 'bayer'
     return 'Bayer'
-  } else if (ditherEffectRand > 0.33) {
+  } else if (rand > 0.33) {
     ditherEffect = 'floydsteinberg'
     return 'Floyd-Steinberg'
   } else {
@@ -90,13 +95,29 @@ function getDitherEffect (): string {
   }
 }
 
+let shapeSize = 'Regular'
+function getShapeSize (): string {
+  const rand = fxrand()
+  if (rand > 0.875) {
+    shapeSize = 'Massive'
+  } else if (rand > 0.65) {
+    shapeSize = 'Triple'
+  } else {
+    shapeSize = 'Regular'
+  }
+  return shapeSize
+}
+
 window.$fxhashFeatures = {
   Shape: fxrand() > 0.1 ? findShapeType() : 'Mix',
   Background: getBackgroundType(),
   'Special text': getSpecialText(),
   Censorship: getCensorshipType(),
-  Dithering: getDitherEffect()
+  Dithering: getDitherEffect(),
+  'Shape Size': getShapeSize()
 }
+
+console.table(window.$fxhashFeatures)
 
 const fettepaletteSettings = {
   total: 9,
@@ -120,7 +141,7 @@ const fettepaletteSettings = {
     window.$fxhashFeatures.Background === 'Reverse' ? 0.7 : 1
   ]
 }
-console.log(fettepaletteSettings)
+// console.log(fettepaletteSettings)
 const colorRamp = fettepalette.generateRandomColorRamp(fettepaletteSettings)
 
 // Init sketch
@@ -141,16 +162,26 @@ function startSketch (s: p5): void {
   let startColor = s.color(colorRamp.light[0][0], colorRamp.light[0][1] * 100, colorRamp.light[0][2] * 100)
   let endColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
 
-  let sentence: string = s.random(sentences)
+  let sentenceId: number|string = Math.round(s.random(0, sentences.length))
+  let sentence: string = sentences[sentenceId]
+  console.log(`Quote #${sentenceId} of ${sentences.length}`)
   if (window.$fxhashFeatures['Special text'] === 'Firehouse') {
+    sentenceId = 'our house is on fire'
     sentence = 'Our house is on fire.'
     for (let i = 0; i < 4; i++) {
       sentence += ' Our house is on fire.'
     }
   } else if (window.$fxhashFeatures['Special text'] === 'Real') {
+    sentenceId = 'the climate crisis is real'
     sentence = 'The climate crisis is real.'
     for (let i = 0; i < 4; i++) {
       sentence += ' The climate crisis is real.'
+    }
+  } else if (window.$fxhashFeatures['Special text'] === 'Delay') {
+    sentenceId = 'climate delay is the new climate denial'
+    sentence = 'Climate delay is the new climate denial.'
+    for (let i = 0; i < 3; i++) {
+      sentence += ' Climate delay is the new climate denial.'
     }
   }
   const sentenceArr = sentence.split(' ')
@@ -186,7 +217,8 @@ function startSketch (s: p5): void {
     jumbledArr.push(str.trim())
     return ''
   }, '')
-  console.log(sentence, jumbledArr)
+  // console.log(sentence, jumbledArr)
+  console.log(`“${sentence}”`)
 
   let leftOffset = s.width / 10
   let rightOffset = s.width / 10
@@ -289,18 +321,23 @@ function startSketch (s: p5): void {
 
   function drawLabels (): void {
     const labelFontSize = 15
-    s.textFont(labelFont)
+    // s.textFont(labelFont)
     s.textSize(labelFontSize)
     s.stroke(textColor)
     const lineY = s.height - bottomOffset - labelFontSize
+    s.strokeWeight(1)
     s.line(leftOffset, lineY, leftOffset * 2, lineY)
     s.line(s.width - rightOffset, lineY, s.width - rightOffset * 2, lineY)
     s.noStroke()
     s.fill(textColor)
     s.textAlign(s.LEFT)
-    s.text('1.5°C', leftOffset, s.height - bottomOffset)
+    s.text('one point five degrees celcius', leftOffset, s.height - bottomOffset + labelFontSize)
     s.textAlign(s.RIGHT)
-    s.text(`#${fxhash.slice(2, 8).toUpperCase()}`, s.width - rightOffset, s.height - bottomOffset)
+    let idLabelTxt = `quote #${sentenceId}`
+    if (typeof sentenceId !== 'number') {
+      idLabelTxt = sentenceId
+    }
+    s.text(idLabelTxt, s.width - rightOffset, s.height - bottomOffset + labelFontSize)
   }
 
   function drawAllLines (): void {
@@ -457,15 +494,13 @@ function startSketch (s: p5): void {
       opts.graphics.fill(opts.color)
       opts.graphics.noStroke()
       const leading = opts.graphics.textLeading()
-      if (!isStrikethrough && !isShakyText) {
-        opts.graphics.text(opts.txt, opts.baseX, topOffset + (leading - fontSize) * 1.5)
-      } else if (isStrikethrough) {
+      if (isStrikethrough) {
         opts.graphics.text(opts.txt, opts.baseX, topOffset + (leading - fontSize) * 1.5)
         opts.graphics.stroke(backgroundColor)
         opts.graphics.noFill()
         opts.graphics.strokeWeight(fontSize / 8)
         opts.graphics.rect(textBox.x + textBox.w / 2, topOffset + leading / 2, textBox.w, 1)
-      } else {
+      } else if (!isShakyText) {
         const txtPoints = mainFont.textToPoints(opts.txt, opts.baseX, topOffset + (leading - fontSize / 2), fontSize, {
           sampleFactor: 1
         })
@@ -477,7 +512,10 @@ function startSketch (s: p5): void {
           if (s.random() > 0.33) opts.graphics.point(po.x + s.random(), po.y + s.random())
         }
         opts.graphics.endShape()
+      } else {
+        opts.graphics.text(opts.txt, opts.baseX, topOffset + (leading - fontSize) * 1.5)
       }
+      opts.graphics.textSize(fontSize)
     }
     return {
       ...textBox,
@@ -486,6 +524,12 @@ function startSketch (s: p5): void {
   }
 
   function drawShapes (opts: DrawShapesOpts): RectBounds {
+    let drawnShapeRadius = opts.shapeRadius
+    if (window.$fxhashFeatures['Shape Size'] === 'Triple') {
+      drawnShapeRadius = opts.shapeRadius * 3
+    } else if (window.$fxhashFeatures['Shape Size'] === 'Massive') {
+      drawnShapeRadius = opts.shapeRadius * 10
+    }
     const startX = opts.baseX - opts.shapeRadius
     let finalX = 0
     s.colorMode(s.RGB)
@@ -495,6 +539,7 @@ function startSketch (s: p5): void {
     for (let i = 0; i < opts.totalShapeWidth; i += incrementer) {
       const lerpVal = s.map(i, 0, opts.totalShapeWidth, 0, 1)
       const interColor = s.lerpColor(opts.startColor, opts.endColor, lerpVal)
+      if (window.$fxhashFeatures['Shape Size'] === 'Massive') interColor.setAlpha(99)
       if (!opts.isSimulation && opts.graphics !== undefined) {
         opts.graphics.stroke(interColor)
         opts.graphics.noFill()
@@ -502,17 +547,17 @@ function startSketch (s: p5): void {
         opts.graphics.translate(opts.baseX + i, topOffset + opts.shapeRadius)
         if (opts.shapeType === 'Ellipse') {
           opts.graphics.rotate(startRotation - i)
-          opts.graphics.ellipse(0, 0, opts.shapeRadius * 2, opts.shapeRadius)
-        } else if (opts.shapeType === 'Diamond') {
+          opts.graphics.ellipse(0, 0, drawnShapeRadius * 2, drawnShapeRadius)
+        } else if (opts.shapeType === 'Square') {
           opts.graphics.rotate(startRotation - i)
-          opts.graphics.rect(0, 0, opts.shapeRadius * 1.5)
+          opts.graphics.rect(0, 0, drawnShapeRadius * 1.5)
         } else if (opts.shapeType === 'Hexagon') {
           opts.graphics.rotate(startRotation - i)
           opts.graphics.beginShape()
           const corners = 6
           for (let j = 0; j < s.TWO_PI; j += (s.TWO_PI / corners)) {
-            const x = Math.cos(j) * opts.shapeRadius
-            const y = Math.sin(j) * opts.shapeRadius
+            const x = Math.cos(j) * drawnShapeRadius
+            const y = Math.sin(j) * drawnShapeRadius
             opts.graphics.vertex(x, y)
           }
           opts.graphics.endShape(s.CLOSE)
@@ -520,8 +565,29 @@ function startSketch (s: p5): void {
           opts.graphics.rotate(i * 3)
           opts.graphics.beginShape()
           for (let j = 0; j < s.TWO_PI; j += s.PI) {
-            const x = Math.cos(j) * opts.shapeRadius
-            const y = Math.sin(j) * opts.shapeRadius
+            const x = Math.cos(j) * drawnShapeRadius
+            const y = Math.sin(j) * drawnShapeRadius
+            opts.graphics.vertex(x, y)
+          }
+          opts.graphics.endShape(s.CLOSE)
+        } else if (opts.shapeType === 'Chaos') {
+          opts.graphics.rotate(i % 45)
+          opts.graphics.strokeWeight(s.random(1, 15))
+          opts.graphics.strokeCap(s.ROUND)
+          opts.graphics.beginShape()
+          for (let j = 0; j < s.TWO_PI; j += s.PI) {
+            const x = Math.cos(j) * drawnShapeRadius
+            const y = Math.sin(j) * drawnShapeRadius
+            opts.graphics.vertex(x, y)
+          }
+          opts.graphics.endShape(s.CLOSE)
+        } else if (opts.shapeType === 'Star') {
+          opts.graphics.rotate(i * 15)
+          const corners = 3
+          opts.graphics.beginShape()
+          for (let j = 0; j < s.TWO_PI; j += (s.TWO_PI / corners)) {
+            const x = Math.cos(j) * drawnShapeRadius
+            const y = Math.sin(j) * drawnShapeRadius
             opts.graphics.vertex(x, y)
           }
           opts.graphics.endShape(s.CLOSE)
