@@ -8,7 +8,7 @@ declare global {
       'Special text': string
       Censorship: string
       Dithering: string
-      'Shape Size': string
+      'Shape size': string
     }
   }
 }
