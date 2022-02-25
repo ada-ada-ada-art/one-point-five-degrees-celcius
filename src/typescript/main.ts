@@ -102,9 +102,9 @@ function getDitherEffect (): string {
 let shapeSize = 'Regular'
 function getShapeSize (): string {
   const rand = fxrand()
-  if (rand > 0.875) {
+  if (rand > 0.8) {
     shapeSize = 'Massive'
-  } else if (rand > 0.65) {
+  } else if (rand > 0.5) {
     shapeSize = 'Triple'
   } else {
     shapeSize = 'Regular'
@@ -131,14 +131,11 @@ const $fxhashFeatures: FXHashFeatures = {
 
 console.table($fxhashFeatures)
 
-const fettepaletteSettings = {
+const fettepaletteSettings: fettepalette.GenerateRandomColorRampArgument = {
   total: 9,
   centerHue: $fxhashFeatures.Background === 'Reverse' ? (345 + fxrand() * 180) % 360 : fxrand() * 360,
   hueCycle: fxrand(),
-  curveMethod: 'lame',
-  // curveMethod: 'powX',
   curveAccent: $fxhashFeatures.Background === 'Reverse' ? 0.5 : fxrand(),
-  // curveAccent: 0.5,
   offsetTint: 0.01,
   offsetShade: 0.01,
   tintShadeHueShift: 0.01,
@@ -215,47 +212,14 @@ function startSketch (s: p5): void {
       sentence += ' The climate crisis is real.'
     }
   } else if ($fxhashFeatures['Special text'] === 'Delay') {
-    sentenceId = 'climate delay is the new climate denial'
+    sentenceId = 'climate delay is climate denial'
     sentence = 'Climate delay is the new climate denial.'
     for (let i = 0; i < 3; i++) {
       sentence += ' Climate delay is the new climate denial.'
     }
   }
-  let sentenceArr = sentence.split(' ')
   let jumbledArr = [] as string[]
-  // We set a limit for the string, so we don't have to deal with splitting a too long string and move to next line and shit
-  const maxStringLength = 20
-  sentenceArr.reduce((prev, cur, idx, arr) => {
-    const rand = s.random()
-    const str = `${prev} ${cur}`
-    let shouldMakePitStop = str.length > maxStringLength
-    // Throw a dice to see if we want to add more text
-    if (!shouldMakePitStop && rand > 0.3 && idx !== 0) {
-      if (idx === arr.length - 1) {
-        jumbledArr.push(`${prev} ${cur}`.trim())
-        return cur
-      } else if (str.length <= maxStringLength) {
-        // If string is not long enough, keep trying to add more
-        return str
-      } else {
-        // If string is long enough, add what we have so far and keep going
-        shouldMakePitStop = true
-      }
-    }
-    if (shouldMakePitStop) {
-      if (prev !== '') jumbledArr.push(`${prev}`.trim())
-      // If we're at the last word, add that one as well as a separate entry
-      if (idx === arr.length - 1) {
-        jumbledArr.push(`${cur}`.trim())
-      }
-      return cur
-    }
-    // If dice didn't work, just add what we have now and reset the ongoing string
-    jumbledArr.push(str.trim())
-    return ''
-  }, '')
-  // console.log(sentence, jumbledArr)
-  console.log(`“${sentence}”`)
+  initSentence()
 
   let leftOffset = s.width / 10
   let rightOffset = s.width / 10
@@ -265,38 +229,11 @@ function startSketch (s: p5): void {
   let fontSize = 30
   let mainFont: p5.Font
 
-  function resetSketch (): void {
-    s.randomSeed(initialRand)
-    s.noiseSeed(initialRand)
-
-    canvasWidth = window.innerWidth
-    canvasHeight = window.innerHeight
-
-    let sentenceId: number|string = Math.round(s.random(0, sentences.length))
-    let sentence: string = sentences[sentenceId]
-    console.log(`Quote #${sentenceId} of ${sentences.length}`)
-    if ($fxhashFeatures['Special text'] === 'Firehouse') {
-      sentenceId = 'our house is on fire'
-      sentence = 'Our house is on fire.'
-      for (let i = 0; i < 4; i++) {
-        sentence += ' Our house is on fire.'
-      }
-    } else if ($fxhashFeatures['Special text'] === 'Real') {
-      sentenceId = 'the climate crisis is real'
-      sentence = 'The climate crisis is real.'
-      for (let i = 0; i < 4; i++) {
-        sentence += ' The climate crisis is real.'
-      }
-    } else if ($fxhashFeatures['Special text'] === 'Delay') {
-      sentenceId = 'climate delay is the new climate denial'
-      sentence = 'Climate delay is the new climate denial.'
-      for (let i = 0; i < 3; i++) {
-        sentence += ' Climate delay is the new climate denial.'
-      }
-    }
-    sentenceArr = sentence.split(' ')
+  function initSentence (): void {
+    const sentenceArr = sentence.split(' ')
     jumbledArr = [] as string[]
     // We set a limit for the string, so we don't have to deal with splitting a too long string and move to next line and shit
+    const maxStringLength = 20
     sentenceArr.reduce((prev, cur, idx, arr) => {
       const rand = s.random()
       const str = `${prev} ${cur}`
@@ -328,6 +265,16 @@ function startSketch (s: p5): void {
     }, '')
     // console.log(sentence, jumbledArr)
     console.log(`“${sentence}”`)
+  }
+
+  function resetSketch (): void {
+    s.randomSeed(initialRand)
+    s.noiseSeed(initialRand)
+
+    canvasWidth = window.innerWidth
+    canvasHeight = window.innerHeight
+
+    initSentence()
 
     leftOffset = s.width / 10
     rightOffset = s.width / 10
@@ -336,7 +283,6 @@ function startSketch (s: p5): void {
     textMargin = s.height / jumbledArr.length
 
     s.setup()
-    s.draw()
   }
   resetFunction = resetSketch
 
@@ -347,9 +293,11 @@ function startSketch (s: p5): void {
   const synth = window.speechSynthesis
   let voices = [] as SpeechSynthesisVoice[]
 
-  let canv = null
+  let textY = fontSize + textMargin
+  let allLineGraphics = [] as p5.Graphics[]
+
   s.setup = () => {
-    canv = s.createCanvas(canvasWidth, canvasHeight)
+    s.createCanvas(canvasWidth, canvasHeight)
     const minFontSize = s.map(s.width, 200, 1920, 10, 20, true)
     const maxFontSize = s.map(s.width, 200, 1920, 20, 50, true)
     fontSize = s.map(sentence.length, 80, 180, maxFontSize, minFontSize, true)
@@ -361,7 +309,7 @@ function startSketch (s: p5): void {
       startColor = s.color(colorRamp.light[0][0], colorRamp.light[0][1] * 100, colorRamp.light[0][2] * 100)
       endColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
     } else if ($fxhashFeatures.Background === 'Dark') {
-      backgroundColor = s.color(0, 0, 10)
+      backgroundColor = s.color(s.random(0, 360), s.random(0, 30), s.random(0, 20))
       startColor = s.color(colorRamp.light[7][0], colorRamp.light[7][1] * 100, colorRamp.light[7][2] * 100)
       endColor = s.color(colorRamp.base[6][0], colorRamp.base[6][1] * 100, colorRamp.base[6][2] * 100)
       textColor = s.color('#fff')
@@ -384,6 +332,18 @@ function startSketch (s: p5): void {
         voices = synth.getVoices()
       }
     }
+
+    allLineGraphics = [] as p5.Graphics[]
+    s.background(backgroundColor)
+    s.colorMode(s.HSL, 360, 100, 100)
+
+    prepareLines()
+    drawAllLines()
+    drawLabels()
+
+    dither(s, ditherEffect)
+
+    fxpreview()
   }
 
   function initGraphic (graphic: p5): p5 {
@@ -397,22 +357,35 @@ function startSketch (s: p5): void {
     return graphic
   }
 
-  let textY = fontSize + textMargin
-  let allLineGraphics = [] as p5.Graphics[]
-  s.draw = () => {
-    allLineGraphics = [] as p5.Graphics[]
-    s.background(backgroundColor)
-    s.colorMode(s.HSL, 360, 100, 100)
+  let startTouchX: number
+  s.touchStarted = () => {
+    startTouchX = s.mouseX
+  }
 
-    prepareLines()
-    drawAllLines()
-    drawLabels()
-
-    dither(s, ditherEffect)
-
-    s.noLoop()
-
-    fxpreview()
+  s.touchEnded = () => {
+    const touchLimitX = s.width / 20
+    let swipeDirection = 0
+    if (startTouchX < s.mouseX - touchLimitX) {
+      console.log('swipe left')
+      swipeDirection = -1
+    } else if (startTouchX > s.mouseX + touchLimitX) {
+      console.log('swipe right')
+      swipeDirection = 1
+    }
+    if (swipeDirection !== 0) {
+      if (typeof sentenceId === 'number') {
+        if (swipeDirection === -1) {
+          sentenceId = sentenceId - 1 >= 0 ? sentenceId - 1 : sentences.length - 1
+        } else if (swipeDirection === 1) {
+          sentenceId = sentenceId + 1 < sentences.length ? sentenceId + 1 : 0
+        }
+        sentence = sentences[sentenceId]
+      } else {
+        sentenceId = 0
+        sentence = sentences[sentenceId]
+      }
+      resetSketch()
+    }
   }
 
   s.doubleClicked = () => {
