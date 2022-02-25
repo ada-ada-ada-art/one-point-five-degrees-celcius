@@ -12,14 +12,14 @@
 console.log(`Created by Ada Ada Ada.
 fxhash: Ada Ada Ada.
 Twitter: @ada_ada_ada_art.
-Licensed under CC BY-NC-SA 4.0.
 Built with p5.js.`)
+const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}LICENSE.md`
+console.log('License can be found here: ' + url)
 
 declare function fxrand (): number
 declare function fxpreview (): void
 
 const initialRand: number = fxrand() * 999999
-// const initialRand: number = 430980.98573948024
 
 function findShapeType (): string {
   const rand = fxrand()
@@ -112,15 +112,7 @@ function getShapeSize (): string {
   return shapeSize
 }
 
-declare interface FXHashFeatures {
-  Shape: string
-  Background: string
-  'Special text': string
-  Censorship: string
-  Dithering: string
-  'Shape Size': string
-}
-const $fxhashFeatures: FXHashFeatures = {
+window.$fxhashFeatures = {
   Shape: fxrand() > 0.1 ? findShapeType() : 'Mix',
   Background: getBackgroundType(),
   'Special text': getSpecialText(),
@@ -129,13 +121,13 @@ const $fxhashFeatures: FXHashFeatures = {
   'Shape Size': getShapeSize()
 }
 
-console.table($fxhashFeatures)
+console.table(window.$fxhashFeatures)
 
 const fettepaletteSettings: fettepalette.GenerateRandomColorRampArgument = {
   total: 9,
-  centerHue: $fxhashFeatures.Background === 'Reverse' ? (345 + fxrand() * 180) % 360 : fxrand() * 360,
+  centerHue: window.$fxhashFeatures.Background === 'Reverse' ? (345 + fxrand() * 180) % 360 : fxrand() * 360,
   hueCycle: fxrand(),
-  curveAccent: $fxhashFeatures.Background === 'Reverse' ? 0.5 : fxrand(),
+  curveAccent: window.$fxhashFeatures.Background === 'Reverse' ? 0.5 : fxrand(),
   offsetTint: 0.01,
   offsetShade: 0.01,
   tintShadeHueShift: 0.01,
@@ -146,8 +138,8 @@ const fettepaletteSettings: fettepalette.GenerateRandomColorRampArgument = {
     0
   ],
   maxSaturationLight: [
-    $fxhashFeatures.Background === 'Reverse' ? 0.7 : 1,
-    $fxhashFeatures.Background === 'Reverse' ? 0.7 : 1
+    window.$fxhashFeatures.Background === 'Reverse' ? 0.7 : 1,
+    window.$fxhashFeatures.Background === 'Reverse' ? 0.7 : 1
   ]
 }
 // console.log(fettepaletteSettings)
@@ -173,7 +165,7 @@ let lona = new p5(startSketch,
 )
 
 const resizeReset = debounce(() => resetFunction())
-window.onresize = (evt) => {
+window.onresize = () => {
   if (lona) {
     resizeReset()
   } else {
@@ -199,19 +191,19 @@ function startSketch (s: p5): void {
   let sentenceId: number|string = Math.floor(s.random(0, sentences.length))
   let sentence: string = sentences[sentenceId]
   console.log(`Quote #${sentenceId} of ${sentences.length}`)
-  if ($fxhashFeatures['Special text'] === 'Firehouse') {
+  if (window.$fxhashFeatures['Special text'] === 'Firehouse') {
     sentenceId = 'our house is on fire'
     sentence = 'Our house is on fire.'
     for (let i = 0; i < 4; i++) {
       sentence += ' Our house is on fire.'
     }
-  } else if ($fxhashFeatures['Special text'] === 'Real') {
+  } else if (window.$fxhashFeatures['Special text'] === 'Real') {
     sentenceId = 'the climate crisis is real'
     sentence = 'The climate crisis is real.'
     for (let i = 0; i < 4; i++) {
       sentence += ' The climate crisis is real.'
     }
-  } else if ($fxhashFeatures['Special text'] === 'Delay') {
+  } else if (window.$fxhashFeatures['Special text'] === 'Delay') {
     sentenceId = 'climate delay is climate denial'
     sentence = 'Climate delay is the new climate denial.'
     for (let i = 0; i < 3; i++) {
@@ -296,19 +288,32 @@ function startSketch (s: p5): void {
   let textY = fontSize + textMargin
   let allLineGraphics = [] as p5.Graphics[]
 
+  let canv: p5.Renderer = null
   s.setup = () => {
-    s.createCanvas(canvasWidth, canvasHeight)
+    s.describeElement('Text', `Showing the following text: ${sentence}.`, s.FALLBACK)
+    s.describeElement('Shapes', `The text is surrounded by shapes in a ${window.$fxhashFeatures.Shape} shape. The size of the shapes is ${window.$fxhashFeatures['Shape Size']}.`, s.FALLBACK)
+    if (window.$fxhashFeatures.Background === 'Dark') s.describeElement('Background', 'The background color of the canvas is dark with white text.', s.FALLBACK)
+    if (window.$fxhashFeatures.Background === 'Regular') s.describeElement('Background', 'The background color of the canvas is grey with dark text.', s.FALLBACK)
+    if (window.$fxhashFeatures.Background === 'Reverse') s.describeElement('Background', 'The background color of the canvas is colorful with light text.', s.FALLBACK)
+    if (window.$fxhashFeatures.Dithering !== 'None') s.describeElement('Glitch effect', `There is also a glitch effect based on the ${window.$fxhashFeatures.Dithering} dithering algorithm.`, s.FALLBACK)
+    if (!canv) {
+      console.log('create')
+      canv = s.createCanvas(canvasWidth, canvasHeight)
+    } else {
+      console.log('resize')
+      s.resizeCanvas(canvasWidth, canvasHeight)
+    }
     const minFontSize = s.map(s.width, 200, 1920, 10, 20, true)
     const maxFontSize = s.map(s.width, 200, 1920, 20, 50, true)
     fontSize = s.map(sentence.length, 80, 180, maxFontSize, minFontSize, true)
     initGraphic(s)
 
-    if ($fxhashFeatures.Background === 'Regular') {
+    if (window.$fxhashFeatures.Background === 'Regular') {
       backgroundColor = s.color(s.random(0, 360), s.random(0, 10), s.random(30, 100))
       textColor = s.color('#000')
       startColor = s.color(colorRamp.light[0][0], colorRamp.light[0][1] * 100, colorRamp.light[0][2] * 100)
       endColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
-    } else if ($fxhashFeatures.Background === 'Dark') {
+    } else if (window.$fxhashFeatures.Background === 'Dark') {
       backgroundColor = s.color(s.random(0, 360), s.random(0, 30), s.random(0, 20))
       startColor = s.color(colorRamp.light[7][0], colorRamp.light[7][1] * 100, colorRamp.light[7][2] * 100)
       endColor = s.color(colorRamp.base[6][0], colorRamp.base[6][1] * 100, colorRamp.base[6][2] * 100)
@@ -333,6 +338,9 @@ function startSketch (s: p5): void {
       }
     }
 
+    for (const graph of allLineGraphics) {
+      graph.remove()
+    }
     allLineGraphics = [] as p5.Graphics[]
     s.background(backgroundColor)
     s.colorMode(s.HSL, 360, 100, 100)
@@ -366,12 +374,24 @@ function startSketch (s: p5): void {
     const touchLimitX = s.width / 20
     let swipeDirection = 0
     if (startTouchX < s.mouseX - touchLimitX) {
-      console.log('swipe left')
       swipeDirection = -1
     } else if (startTouchX > s.mouseX + touchLimitX) {
-      console.log('swipe right')
       swipeDirection = 1
     }
+    updateQuote(swipeDirection)
+  }
+
+  s.keyPressed = () => {
+    let swipeDirection = 0
+    if (s.keyCode === s.LEFT_ARROW) {
+      swipeDirection = -1
+    } else if (s.keyCode === s.RIGHT_ARROW) {
+      swipeDirection = 1
+    }
+    updateQuote(swipeDirection)
+  }
+
+  function updateQuote (swipeDirection: number): void {
     if (swipeDirection !== 0) {
       if (typeof sentenceId === 'number') {
         if (swipeDirection === -1) {
@@ -432,7 +452,7 @@ function startSketch (s: p5): void {
   }
 
   function prepareLines (): void {
-    const shapeType = $fxhashFeatures.Shape
+    const shapeType = window.$fxhashFeatures.Shape
 
     // Establish base values for lines
     textY = fontSize + textMargin
@@ -552,6 +572,8 @@ function startSketch (s: p5): void {
         activeLineGraphic = s.createGraphics(s.width, s.height)
         initGraphic(activeLineGraphic)
       }
+
+      if (i === jumbledArr.length - 1) activeLineGraphic.remove()
     }
   }
 
@@ -602,9 +624,9 @@ function startSketch (s: p5): void {
 
   function drawShapes (opts: DrawShapesOpts): RectBounds {
     let drawnShapeRadius = opts.shapeRadius
-    if ($fxhashFeatures['Shape Size'] === 'Triple') {
+    if (window.$fxhashFeatures['Shape Size'] === 'Triple') {
       drawnShapeRadius = opts.shapeRadius * 3
-    } else if ($fxhashFeatures['Shape Size'] === 'Massive') {
+    } else if (window.$fxhashFeatures['Shape Size'] === 'Massive') {
       drawnShapeRadius = opts.shapeRadius * 10
     }
     const startX = opts.baseX - opts.shapeRadius
@@ -616,7 +638,7 @@ function startSketch (s: p5): void {
     for (let i = 0; i < opts.totalShapeWidth; i += incrementer) {
       const lerpVal = s.map(i, 0, opts.totalShapeWidth, 0, 1)
       const interColor = s.lerpColor(opts.startColor, opts.endColor, lerpVal)
-      if ($fxhashFeatures['Shape Size'] === 'Massive') interColor.setAlpha(99)
+      if (window.$fxhashFeatures['Shape Size'] === 'Massive') interColor.setAlpha(99)
       if (!opts.isSimulation && opts.graphics !== undefined) {
         opts.graphics.stroke(interColor)
         opts.graphics.noFill()
