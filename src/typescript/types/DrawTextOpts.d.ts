@@ -1,4 +1,4 @@
-interface DrawTextOpts {
+declare interface DrawTextOpts {
   txt: string
   isSimulation?: boolean
   color: p5.Color

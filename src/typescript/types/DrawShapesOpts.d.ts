@@ -1,4 +1,4 @@
-interface DrawShapesOpts {
+declare interface DrawShapesOpts {
   isSimulation?: boolean
   startColor: p5.Color
   endColor: p5.Color
@@ -7,10 +7,11 @@ interface DrawShapesOpts {
   totalShapeWidth: number
   shapeRadius: number
   graphics: p5.Graphics
-  shapeType: ShapeType
+  // Enums don't want to work properly in our setup, so we add |string as a workaround
+  shapeType: ShapeType|string
 }
 
-enum ShapeType {
+declare enum ShapeType {
   Ellipse = 'Ellipse',
   Square = 'Square',
   Hexagon = 'Hexagon',

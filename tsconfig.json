@@ -12,5 +12,5 @@
     "rootDir": "./src/typescript/",
     /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
   },
-  "include": ["./src/typescript/*.ts", "./src/typescript/types/*.ts", "global.d.ts"]
+  "include": ["./src/typescript/*.ts", "./src/typescript/types/*.ts", "p5.d.ts"]
 }

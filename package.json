@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "sass --watch src/scss:public/css & tsc -w & nodemon index.js",
     "start": "node index.js",
-    "build": "sass --update src/scss:public/css && tsc"
+    "build": "sass --update src/scss:public/css && (tsc) && terser public/js/*.js > public/js/minified/main.min.js && zip one-point-five.zip index.html LICENSE.md package.json public/css/* public/img/* public/lib/* public/js/minified/* public/*.png public/*.icon public/*.webmanifest"
   },
   "author": "ada_ada_ada_art",
   "license": "CC-BY-NC-SA-4.0",
@@ -16,7 +16,7 @@
     "express": "^4.17.2",
     "fettepalette": "^3.1.0",
     "p5": "^1.4.0",
-    "terser": "^5.10.0",
+    "terser": "^5.11.0",
     "typescript": "^4.5.5"
   },
   "devDependencies": {

@@ -8,14 +8,18 @@
     Built with p5.js.
 
 */
+
 console.log(`Created by Ada Ada Ada.
 fxhash: Ada Ada Ada.
 Twitter: @ada_ada_ada_art.
 Licensed under CC BY-NC-SA 4.0.
 Built with p5.js.`)
 
+declare function fxrand (): number
+declare function fxpreview (): void
+
 const initialRand: number = fxrand() * 999999
-// const initialRand: number = 380338.18673768383
+// const initialRand: number = 430980.98573948024
 
 function findShapeType (): string {
   const rand = fxrand()
@@ -36,9 +40,9 @@ function findShapeType (): string {
 
 function getBackgroundType (): string {
   const rand = fxrand()
-  if (rand > 0.875) {
+  if (rand > 0.66) {
     return 'Dark'
-  } else if (rand > 0.5) {
+  } else if (rand > 0.33) {
     return 'Reverse'
   } else {
     return 'Regular'
@@ -108,7 +112,15 @@ function getShapeSize (): string {
   return shapeSize
 }
 
-window.$fxhashFeatures = {
+declare interface FXHashFeatures {
+  Shape: string
+  Background: string
+  'Special text': string
+  Censorship: string
+  Dithering: string
+  'Shape Size': string
+}
+const $fxhashFeatures: FXHashFeatures = {
   Shape: fxrand() > 0.1 ? findShapeType() : 'Mix',
   Background: getBackgroundType(),
   'Special text': getSpecialText(),
@@ -117,15 +129,15 @@ window.$fxhashFeatures = {
   'Shape Size': getShapeSize()
 }
 
-console.table(window.$fxhashFeatures)
+console.table($fxhashFeatures)
 
 const fettepaletteSettings = {
   total: 9,
-  centerHue: window.$fxhashFeatures.Background === 'Reverse' ? (345 + fxrand() * 180) % 360 : fxrand() * 360,
+  centerHue: $fxhashFeatures.Background === 'Reverse' ? (345 + fxrand() * 180) % 360 : fxrand() * 360,
   hueCycle: fxrand(),
   curveMethod: 'lame',
   // curveMethod: 'powX',
-  curveAccent: window.$fxhashFeatures.Background === 'Reverse' ? 0.5 : fxrand(),
+  curveAccent: $fxhashFeatures.Background === 'Reverse' ? 0.5 : fxrand(),
   // curveAccent: 0.5,
   offsetTint: 0.01,
   offsetShade: 0.01,
@@ -137,55 +149,80 @@ const fettepaletteSettings = {
     0
   ],
   maxSaturationLight: [
-    window.$fxhashFeatures.Background === 'Reverse' ? 0.7 : 1,
-    window.$fxhashFeatures.Background === 'Reverse' ? 0.7 : 1
+    $fxhashFeatures.Background === 'Reverse' ? 0.7 : 1,
+    $fxhashFeatures.Background === 'Reverse' ? 0.7 : 1
   ]
 }
 // console.log(fettepaletteSettings)
 const colorRamp = fettepalette.generateRandomColorRamp(fettepaletteSettings)
 
+// SRC: https://www.freecodecamp.org/news/javascript-debounce-example/
+function debounce (func: any, timeout = 300): any {
+  let timer: number
+  return (...args: any[]) => {
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      func.apply(this, args)
+    }, timeout)
+  }
+}
+
 // Init sketch
+let resetFunction = (): void => { console.log('Starting.') }
 // eslint-disable-next-line new-cap
-const lona = new p5(startSketch,
+let lona = new p5(startSketch,
   // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   document.getElementById('sketch') || undefined
 )
+
+const resizeReset = debounce(() => resetFunction())
+window.onresize = (evt) => {
+  if (lona) {
+    resizeReset()
+  } else {
+    // eslint-disable-next-line new-cap
+    lona = new p5(startSketch,
+      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+      document.getElementById('sketch') || undefined
+    )
+  }
+}
 
 function startSketch (s: p5): void {
   s.randomSeed(initialRand)
   s.noiseSeed(initialRand)
 
-  const canvasWidth = window.innerWidth
-  const canvasHeight = window.innerHeight
+  let canvasWidth = window.innerWidth
+  let canvasHeight = window.innerHeight
   let backgroundColor = s.color(255, 255, 255)
   let textColor = s.color('#000')
   let startColor = s.color(colorRamp.light[0][0], colorRamp.light[0][1] * 100, colorRamp.light[0][2] * 100)
   let endColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
 
-  let sentenceId: number|string = Math.round(s.random(0, sentences.length))
+  let sentenceId: number|string = Math.floor(s.random(0, sentences.length))
   let sentence: string = sentences[sentenceId]
   console.log(`Quote #${sentenceId} of ${sentences.length}`)
-  if (window.$fxhashFeatures['Special text'] === 'Firehouse') {
+  if ($fxhashFeatures['Special text'] === 'Firehouse') {
     sentenceId = 'our house is on fire'
     sentence = 'Our house is on fire.'
     for (let i = 0; i < 4; i++) {
       sentence += ' Our house is on fire.'
     }
-  } else if (window.$fxhashFeatures['Special text'] === 'Real') {
+  } else if ($fxhashFeatures['Special text'] === 'Real') {
     sentenceId = 'the climate crisis is real'
     sentence = 'The climate crisis is real.'
     for (let i = 0; i < 4; i++) {
       sentence += ' The climate crisis is real.'
     }
-  } else if (window.$fxhashFeatures['Special text'] === 'Delay') {
+  } else if ($fxhashFeatures['Special text'] === 'Delay') {
     sentenceId = 'climate delay is the new climate denial'
     sentence = 'Climate delay is the new climate denial.'
     for (let i = 0; i < 3; i++) {
       sentence += ' Climate delay is the new climate denial.'
     }
   }
-  const sentenceArr = sentence.split(' ')
-  const jumbledArr = [] as string[]
+  let sentenceArr = sentence.split(' ')
+  let jumbledArr = [] as string[]
   // We set a limit for the string, so we don't have to deal with splitting a too long string and move to next line and shit
   const maxStringLength = 20
   sentenceArr.reduce((prev, cur, idx, arr) => {
@@ -227,42 +264,103 @@ function startSketch (s: p5): void {
   let textMargin = s.height / jumbledArr.length
   let fontSize = 30
   let mainFont: p5.Font
-  let labelFont: p5.Font
+
+  function resetSketch (): void {
+    s.randomSeed(initialRand)
+    s.noiseSeed(initialRand)
+
+    canvasWidth = window.innerWidth
+    canvasHeight = window.innerHeight
+
+    let sentenceId: number|string = Math.round(s.random(0, sentences.length))
+    let sentence: string = sentences[sentenceId]
+    console.log(`Quote #${sentenceId} of ${sentences.length}`)
+    if ($fxhashFeatures['Special text'] === 'Firehouse') {
+      sentenceId = 'our house is on fire'
+      sentence = 'Our house is on fire.'
+      for (let i = 0; i < 4; i++) {
+        sentence += ' Our house is on fire.'
+      }
+    } else if ($fxhashFeatures['Special text'] === 'Real') {
+      sentenceId = 'the climate crisis is real'
+      sentence = 'The climate crisis is real.'
+      for (let i = 0; i < 4; i++) {
+        sentence += ' The climate crisis is real.'
+      }
+    } else if ($fxhashFeatures['Special text'] === 'Delay') {
+      sentenceId = 'climate delay is the new climate denial'
+      sentence = 'Climate delay is the new climate denial.'
+      for (let i = 0; i < 3; i++) {
+        sentence += ' Climate delay is the new climate denial.'
+      }
+    }
+    sentenceArr = sentence.split(' ')
+    jumbledArr = [] as string[]
+    // We set a limit for the string, so we don't have to deal with splitting a too long string and move to next line and shit
+    sentenceArr.reduce((prev, cur, idx, arr) => {
+      const rand = s.random()
+      const str = `${prev} ${cur}`
+      let shouldMakePitStop = str.length > maxStringLength
+      // Throw a dice to see if we want to add more text
+      if (!shouldMakePitStop && rand > 0.3 && idx !== 0) {
+        if (idx === arr.length - 1) {
+          jumbledArr.push(`${prev} ${cur}`.trim())
+          return cur
+        } else if (str.length <= maxStringLength) {
+        // If string is not long enough, keep trying to add more
+          return str
+        } else {
+        // If string is long enough, add what we have so far and keep going
+          shouldMakePitStop = true
+        }
+      }
+      if (shouldMakePitStop) {
+        if (prev !== '') jumbledArr.push(`${prev}`.trim())
+        // If we're at the last word, add that one as well as a separate entry
+        if (idx === arr.length - 1) {
+          jumbledArr.push(`${cur}`.trim())
+        }
+        return cur
+      }
+      // If dice didn't work, just add what we have now and reset the ongoing string
+      jumbledArr.push(str.trim())
+      return ''
+    }, '')
+    // console.log(sentence, jumbledArr)
+    console.log(`“${sentence}”`)
+
+    leftOffset = s.width / 10
+    rightOffset = s.width / 10
+    topOffset = s.height / 10
+    bottomOffset = s.height / 10
+    textMargin = s.height / jumbledArr.length
+
+    s.setup()
+    s.draw()
+  }
+  resetFunction = resetSketch
 
   s.preload = () => {
     mainFont = s.loadFont('./public/fonts/Inter-Light.otf')
-    labelFont = s.loadFont('./public/fonts/Inter-Bold.otf')
-
-    // mainFont = s.loadFont('./public/fonts/Inter-Bold.otf')
-    // labelFont = s.loadFont('./public/fonts/Inter-Light.otf')
-
-    // mainFont = s.loadFont('./public/fonts/Inter-Black.otf')
-    // mainFont = s.loadFont('./public/fonts/Inter-ExtraBold.otf')
-
-    // Looks pretty, but very illegible
-    // mainFont = s.loadFont('./public/fonts/HomemadeApple-Regular.otf')
-    // Looks cool with dither glitch, but not alone
-    // mainFont = s.loadFont('./public/fonts/SpecialElite-Regular.otf')
-
-    // labelFont = mainFont
   }
 
   const synth = window.speechSynthesis
   let voices = [] as SpeechSynthesisVoice[]
 
+  let canv = null
   s.setup = () => {
-    s.createCanvas(canvasWidth, canvasHeight)
+    canv = s.createCanvas(canvasWidth, canvasHeight)
     const minFontSize = s.map(s.width, 200, 1920, 10, 20, true)
     const maxFontSize = s.map(s.width, 200, 1920, 20, 50, true)
     fontSize = s.map(sentence.length, 80, 180, maxFontSize, minFontSize, true)
     initGraphic(s)
 
-    if (window.$fxhashFeatures.Background === 'Regular') {
-      backgroundColor = s.color(0, 0, 70)
+    if ($fxhashFeatures.Background === 'Regular') {
+      backgroundColor = s.color(s.random(0, 360), s.random(0, 10), s.random(30, 100))
       textColor = s.color('#000')
       startColor = s.color(colorRamp.light[0][0], colorRamp.light[0][1] * 100, colorRamp.light[0][2] * 100)
       endColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
-    } else if (window.$fxhashFeatures.Background === 'Dark') {
+    } else if ($fxhashFeatures.Background === 'Dark') {
       backgroundColor = s.color(0, 0, 10)
       startColor = s.color(colorRamp.light[7][0], colorRamp.light[7][1] * 100, colorRamp.light[7][2] * 100)
       endColor = s.color(colorRamp.base[6][0], colorRamp.base[6][1] * 100, colorRamp.base[6][2] * 100)
@@ -296,11 +394,13 @@ function startSketch (s: p5): void {
     graphic.textAlign(s.LEFT, s.CENTER)
     graphic.textFont(mainFont)
     graphic.angleMode(s.DEGREES)
+    return graphic
   }
 
   let textY = fontSize + textMargin
-  const allLineGraphics = [] as p5[]
+  let allLineGraphics = [] as p5.Graphics[]
   s.draw = () => {
+    allLineGraphics = [] as p5.Graphics[]
     s.background(backgroundColor)
     s.colorMode(s.HSL, 360, 100, 100)
 
@@ -311,6 +411,8 @@ function startSketch (s: p5): void {
     dither(s, ditherEffect)
 
     s.noLoop()
+
+    fxpreview()
   }
 
   s.doubleClicked = () => {
@@ -357,7 +459,7 @@ function startSketch (s: p5): void {
   }
 
   function prepareLines (): void {
-    const shapeType = window.$fxhashFeatures.Shape
+    const shapeType = $fxhashFeatures.Shape
 
     // Establish base values for lines
     textY = fontSize + textMargin
@@ -503,13 +605,15 @@ function startSketch (s: p5): void {
       } else if (!isShakyText) {
         const txtPoints = mainFont.textToPoints(opts.txt, opts.baseX, topOffset + (leading - fontSize / 2), fontSize, {
           sampleFactor: 1
-        })
+        }) as Array<{x: number, y: number, alpha: number}>
         opts.graphics.stroke(opts.color)
         opts.graphics.noFill()
         opts.graphics.strokeWeight(1)
         opts.graphics.beginShape()
         for (const po of txtPoints) {
-          if (s.random() > 0.33) opts.graphics.point(po.x + s.random(), po.y + s.random())
+          const xRandom = s.random()
+          const yRandom = s.random()
+          if (s.random() > 0.33) opts.graphics.point(po.x + xRandom, po.y + yRandom)
         }
         opts.graphics.endShape()
       } else {
@@ -525,9 +629,9 @@ function startSketch (s: p5): void {
 
   function drawShapes (opts: DrawShapesOpts): RectBounds {
     let drawnShapeRadius = opts.shapeRadius
-    if (window.$fxhashFeatures['Shape Size'] === 'Triple') {
+    if ($fxhashFeatures['Shape Size'] === 'Triple') {
       drawnShapeRadius = opts.shapeRadius * 3
-    } else if (window.$fxhashFeatures['Shape Size'] === 'Massive') {
+    } else if ($fxhashFeatures['Shape Size'] === 'Massive') {
       drawnShapeRadius = opts.shapeRadius * 10
     }
     const startX = opts.baseX - opts.shapeRadius
@@ -539,7 +643,7 @@ function startSketch (s: p5): void {
     for (let i = 0; i < opts.totalShapeWidth; i += incrementer) {
       const lerpVal = s.map(i, 0, opts.totalShapeWidth, 0, 1)
       const interColor = s.lerpColor(opts.startColor, opts.endColor, lerpVal)
-      if (window.$fxhashFeatures['Shape Size'] === 'Massive') interColor.setAlpha(99)
+      if ($fxhashFeatures['Shape Size'] === 'Massive') interColor.setAlpha(99)
       if (!opts.isSimulation && opts.graphics !== undefined) {
         opts.graphics.stroke(interColor)
         opts.graphics.noFill()
@@ -637,7 +741,7 @@ function dither (s: p5, type: string, threshold?: number): void {
     s.pixels[i] = Math.floor(lumR[s.pixels[i]] + lumG[s.pixels[i + 1]] + lumB[s.pixels[i + 2]])
   }
 
-  const floydsteinbergThreshold = fxrand() * 129
+  const floydsteinbergThreshold = s.random() * 129
   for (let i = 0; i <= s.pixels.length; i += 4) {
     if (type === 'none') {
       // No dithering
