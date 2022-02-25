@@ -118,7 +118,7 @@ window.$fxhashFeatures = {
   'Special text': getSpecialText(),
   Censorship: getCensorshipType(),
   Dithering: getDitherEffect(),
-  'Shape Size': getShapeSize()
+  'Shape size': getShapeSize()
 }
 
 console.table(window.$fxhashFeatures)
@@ -291,7 +291,7 @@ function startSketch (s: p5): void {
   let canv: p5.Renderer = null
   s.setup = () => {
     s.describeElement('Text', `Showing the following text: ${sentence}.`, s.FALLBACK)
-    s.describeElement('Shapes', `The text is surrounded by shapes in a ${window.$fxhashFeatures.Shape} shape. The size of the shapes is ${window.$fxhashFeatures['Shape Size']}.`, s.FALLBACK)
+    s.describeElement('Shapes', `The text is surrounded by shapes in a ${window.$fxhashFeatures.Shape} shape. The size of the shapes is ${window.$fxhashFeatures['Shape size']}.`, s.FALLBACK)
     if (window.$fxhashFeatures.Background === 'Dark') s.describeElement('Background', 'The background color of the canvas is dark with white text.', s.FALLBACK)
     if (window.$fxhashFeatures.Background === 'Regular') s.describeElement('Background', 'The background color of the canvas is grey with dark text.', s.FALLBACK)
     if (window.$fxhashFeatures.Background === 'Reverse') s.describeElement('Background', 'The background color of the canvas is colorful with light text.', s.FALLBACK)
@@ -622,9 +622,9 @@ function startSketch (s: p5): void {
 
   function drawShapes (opts: DrawShapesOpts): RectBounds {
     let drawnShapeRadius = opts.shapeRadius
-    if (window.$fxhashFeatures['Shape Size'] === 'Triple') {
+    if (window.$fxhashFeatures['Shape size'] === 'Triple') {
       drawnShapeRadius = opts.shapeRadius * 3
-    } else if (window.$fxhashFeatures['Shape Size'] === 'Massive') {
+    } else if (window.$fxhashFeatures['Shape size'] === 'Massive') {
       drawnShapeRadius = opts.shapeRadius * 10
     }
     const startX = opts.baseX - opts.shapeRadius
@@ -636,7 +636,7 @@ function startSketch (s: p5): void {
     for (let i = 0; i < opts.totalShapeWidth; i += incrementer) {
       const lerpVal = s.map(i, 0, opts.totalShapeWidth, 0, 1)
       const interColor = s.lerpColor(opts.startColor, opts.endColor, lerpVal)
-      if (window.$fxhashFeatures['Shape Size'] === 'Massive') interColor.setAlpha(99)
+      if (window.$fxhashFeatures['Shape size'] === 'Massive') interColor.setAlpha(99)
       if (!opts.isSimulation && opts.graphics !== undefined) {
         opts.graphics.stroke(interColor)
         opts.graphics.noFill()
