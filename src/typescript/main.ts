@@ -297,10 +297,8 @@ function startSketch (s: p5): void {
     if (window.$fxhashFeatures.Background === 'Reverse') s.describeElement('Background', 'The background color of the canvas is colorful with light text.', s.FALLBACK)
     if (window.$fxhashFeatures.Dithering !== 'None') s.describeElement('Glitch effect', `There is also a glitch effect based on the ${window.$fxhashFeatures.Dithering} dithering algorithm.`, s.FALLBACK)
     if (!canv) {
-      console.log('create')
       canv = s.createCanvas(canvasWidth, canvasHeight)
     } else {
-      console.log('resize')
       s.resizeCanvas(canvasWidth, canvasHeight)
     }
     const minFontSize = s.map(s.width, 200, 1920, 10, 20, true)

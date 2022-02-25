@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "sass --watch src/scss:public/css & tsc -w & nodemon index.js",
     "start": "node index.js",
-    "build": "sass --update src/scss:public/css && tsc && terser public/js/*.js > public/js/minified/main.min.js && zip one-point-five.zip index.html LICENSE.md package.json public/fonts/*.otf public/css/* public/img/* public/lib/* public/js/minified/* public/*.png public/*.icon public/*.webmanifest"
+    "build": "sass --update src/scss:public/css && tsc && terser public/js/*.js > public/js/minified/main.min.js && zip one-point-five.zip index.html LICENSE.md package.json public/fonts/*.otf public/css/* public/lib/* public/js/minified/* public/*.png public/*.ico public/*.webmanifest"
   },
   "author": "ada_ada_ada_art",
   "dependencies": {

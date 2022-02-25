@@ -152,5 +152,4 @@ n
 .vscode
 types/*.js
 types/*.js.map
-public/js/*.js
-public/js/*.js.map
+public/js/**/*.js*
