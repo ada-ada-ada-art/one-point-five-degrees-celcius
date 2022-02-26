@@ -413,7 +413,7 @@ function startSketch (s: p5): void {
   }
 
   function drawLabels (): void {
-    const labelFontSize = 15
+    const labelFontSize = s.map(s.height, 400, 1600, 8, 25)
     // s.textFont(labelFont)
     s.textSize(labelFontSize)
     s.stroke(textColor)
