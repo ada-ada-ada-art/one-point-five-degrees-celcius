@@ -11,4 +11,8 @@ declare global {
       'Shape size': string
     }
   }
+
+  interface p5 {
+    resetSketch: Function
+  }
 }

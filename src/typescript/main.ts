@@ -157,14 +157,13 @@ function debounce (func: any, timeout = 300): any {
 }
 
 // Init sketch
-let resetFunction = (): void => { console.log('Starting.') }
 // eslint-disable-next-line new-cap
 let lona = new p5(startSketch,
   // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   document.getElementById('sketch') || undefined
 )
 
-const resizeReset = debounce(() => resetFunction())
+const resizeReset = debounce(() => lona.resetSketch())
 window.onresize = () => {
   if (lona) {
     resizeReset()
@@ -259,7 +258,8 @@ function startSketch (s: p5): void {
     console.log(`“${sentence}”`)
   }
 
-  function resetSketch (): void {
+  s.resetSketch = (): void => {
+    console.log('resetsketch')
     s.randomSeed(initialRand)
     s.noiseSeed(initialRand)
 
@@ -276,7 +276,6 @@ function startSketch (s: p5): void {
 
     s.setup()
   }
-  resetFunction = resetSketch
 
   s.preload = () => {
     mainFont = s.loadFont('./public/fonts/Inter-Light.otf')
@@ -329,10 +328,12 @@ function startSketch (s: p5): void {
     bottomOffset = s.height / 10
     textMargin = s.height / jumbledArr.length
 
-    voices = synth.getVoices()
-    if (speechSynthesis.onvoiceschanged !== undefined) {
-      speechSynthesis.onvoiceschanged = () => {
-        voices = synth.getVoices()
+    if (synth) {
+      voices = synth.getVoices()
+      if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = () => {
+          voices = synth.getVoices()
+        }
       }
     }
 
@@ -402,14 +403,16 @@ function startSketch (s: p5): void {
         sentenceId = 0
         sentence = sentences[sentenceId]
       }
-      resetSketch()
+      s.resetSketch()
     }
   }
 
   s.doubleClicked = () => {
-    const utterThis = new SpeechSynthesisUtterance(sentence)
-    utterThis.voice = voices.find((vo) => vo.default)
-    synth.speak(utterThis)
+    if (synth) {
+      const utterThis = new SpeechSynthesisUtterance(sentence)
+      utterThis.voice = voices.find((vo) => vo.default)
+      synth.speak(utterThis)
+    }
   }
 
   function drawLabels (): void {
