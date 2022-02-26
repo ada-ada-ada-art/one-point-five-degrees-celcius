@@ -301,8 +301,8 @@ function startSketch (s: p5): void {
     } else {
       s.resizeCanvas(canvasWidth, canvasHeight)
     }
-    const minFontSize = s.map(s.width, 200, 1920, 10, 20, true)
-    const maxFontSize = s.map(s.width, 200, 1920, 20, 50, true)
+    const minFontSize = s.map(s.height, 360, 1000, 10, 20, true)
+    const maxFontSize = s.map(s.height, 360, 1000, 15, 50, true)
     fontSize = s.map(sentence.length, 80, 180, maxFontSize, minFontSize, true)
     initGraphic(s)
 
