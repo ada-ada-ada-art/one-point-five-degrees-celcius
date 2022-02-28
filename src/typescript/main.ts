@@ -23,6 +23,7 @@ const initialRand: number = fxrand() * 999999
 
 function findShapeType (): string {
   const rand = fxrand()
+  return 'Ellipse'
   if (rand > (1 / 6) * 5) {
     return 'Star'
   } else if (rand > (1 / 6) * 4) {
@@ -65,7 +66,8 @@ function getSpecialText (): string {
 let strikethroughThreshold = 0.5
 let shakyLineThreshold = 0.5
 function getCensorshipType (): string {
-  const rand = fxrand()
+  let rand = fxrand()
+  rand = 1
   if (rand > 0.95) {
     strikethroughThreshold = 1
     shakyLineThreshold = 1
@@ -83,7 +85,8 @@ function getCensorshipType (): string {
 
 let ditherEffect = 'atkinson'
 function getDitherEffect (): string {
-  const rand = fxrand()
+  let rand = fxrand()
+  rand = 1
   if (rand > 0.95) {
     ditherEffect = 'none'
     return 'None'
@@ -101,7 +104,8 @@ function getDitherEffect (): string {
 
 let shapeSize = 'Regular'
 function getShapeSize (): string {
-  const rand = fxrand()
+  let rand = fxrand()
+  rand = 0.6
   if (rand > 0.8) {
     shapeSize = 'Massive'
   } else if (rand > 0.5) {
@@ -208,6 +212,10 @@ function startSketch (s: p5): void {
     for (let i = 0; i < 3; i++) {
       sentence += ' Climate delay is the new climate denial.'
     }
+  }
+  sentence = 'Fuck Vladimir Putin.'
+  for (let i = 0; i < 4; i++) {
+    sentence += ' Fuck Vladimir Putin.'
   }
   let jumbledArr = [] as string[]
   initSentence()
@@ -321,6 +329,12 @@ function startSketch (s: p5): void {
       endColor = s.color(colorRamp.base[4][0], 100, 90)
       textColor = s.color(0, 0, 100)
     }
+    startColor = s.color(254, 243, 1)
+    // endColor = s.color(102, 0, 255)
+    endColor = s.color('#2266BE')
+    backgroundColor = s.color(250, 240, 250)
+    // textColor = s.color(71, 0, 224)
+    textColor = s.color('#2266BE')
 
     leftOffset = s.width / 10
     rightOffset = s.width / 10
@@ -346,15 +360,15 @@ function startSketch (s: p5): void {
 
     prepareLines()
     drawAllLines()
-    drawLabels()
+    // drawLabels()
 
-    dither(s, ditherEffect)
+    // dither(s, ditherEffect)
 
     fxpreview()
   }
 
   function initGraphic (graphic: p5): p5 {
-    graphic.colorMode(s.HSL, 360, 100, 100, 100)
+    graphic.colorMode(s.RGB)
     graphic.ellipseMode(s.CENTER)
     graphic.rectMode(s.CENTER)
     graphic.textSize(fontSize)
@@ -427,12 +441,13 @@ function startSketch (s: p5): void {
     s.noStroke()
     s.fill(textColor)
     s.textAlign(s.LEFT)
-    s.text('one point five degrees celcius', leftOffset, s.height - bottomOffset + labelFontSize)
+    s.text('fuck vladimir putin', leftOffset, s.height - bottomOffset + labelFontSize)
     s.textAlign(s.RIGHT)
     let idLabelTxt = `quote #${sentenceId}`
     if (typeof sentenceId !== 'number') {
       idLabelTxt = sentenceId
     }
+    idLabelTxt = 'fuck vladimir putin'
     s.text(idLabelTxt, s.width - rightOffset, s.height - bottomOffset + labelFontSize)
   }
 
@@ -441,7 +456,7 @@ function startSketch (s: p5): void {
       x: leftOffset,
       y: topOffset,
       w: s.width - leftOffset - rightOffset,
-      h: s.height - topOffset - bottomOffset
+      h: s.height - topOffset
     }
     const leading = s.textLeading()
     const lineGap = boundingBox.h / allLineGraphics.length
@@ -587,6 +602,7 @@ function startSketch (s: p5): void {
       wentOutOfBounds = true
     }
     if (!opts.isSimulation && opts.graphics !== undefined) {
+      console.log(strikethroughThreshold, shakyLineThreshold)
       const isStrikethrough = s.random() > strikethroughThreshold
       const isShakyText = s.random() > shakyLineThreshold
       opts.graphics.fill(opts.color)
@@ -598,7 +614,7 @@ function startSketch (s: p5): void {
         opts.graphics.noFill()
         opts.graphics.strokeWeight(fontSize / 8)
         opts.graphics.rect(textBox.x + textBox.w / 2, topOffset + leading / 2, textBox.w, 1)
-      } else if (!isShakyText) {
+      } else if (isShakyText) {
         const txtPoints = mainFont.textToPoints(opts.txt, opts.baseX, topOffset + (leading - fontSize / 2), fontSize, {
           sampleFactor: 1
         }) as Array<{x: number, y: number, alpha: number}>
@@ -642,6 +658,7 @@ function startSketch (s: p5): void {
       if (window.$fxhashFeatures['Shape size'] === 'Massive') interColor.setAlpha(99)
       if (!opts.isSimulation && opts.graphics !== undefined) {
         opts.graphics.stroke(interColor)
+        opts.graphics.strokeWeight(1)
         opts.graphics.noFill()
         opts.graphics.push()
         opts.graphics.translate(opts.baseX + i, topOffset + opts.shapeRadius)
