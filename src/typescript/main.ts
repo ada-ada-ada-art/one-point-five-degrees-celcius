@@ -3,7 +3,7 @@
     Created by Ada Ada Ada.
     fxhash: Ada Ada Ada.
     Twitter: @ada_ada_ada_art.
-    Licensed under CC BY-NC-SA 4.0
+    Licensed under Climate Strike License
 
     Built with p5.js.
 
