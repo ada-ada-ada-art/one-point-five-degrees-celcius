@@ -2,7 +2,7 @@
 
 ## What is this?
 
-This project is the code for Ada Ada Ada's generative art piece One Point Five Degrees Celcius, released on [https://www.fxhash.xyz/generative/10011](fxhash) in February 2022.
+This project is the code for Ada Ada Ada's generative art piece One Point Five Degrees Celcius, released on [fxhash in February 2022](https://www.fxhash.xyz/generative/10011).
 
 The piece features 128 quotes from the infamous IPCC Report on the consequences of Global Warming of 1.5°C.
 
@@ -10,7 +10,7 @@ To symbolize how climate science gets distorted by politicians, companies and ot
 
 The piece adjusts to different screen sizes, so it's recommended to try adjusting the browser window. 
 
-This project is made with Typescript, [https://p5js.org/](p5.js), [https://meodai.github.io/fettepalette/](FettePalette) and the font [https://rsms.me/inter/](Inter) by Rasmus Andersson.
+This project is made with Typescript, [p5.js](https://p5js.org/), [FettePalette](https://meodai.github.io/fettepalette/) and the font [Inter by Rasmus Andersson](https://rsms.me/inter/).
 
 ## Why is this open source?
 
