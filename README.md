@@ -14,10 +14,11 @@ This project is made with Typescript, [p5.js](https://p5js.org/), [FettePalette]
 
 ## Why is this open source?
 
-For two reasons:
+For three reasons:
 
 1. To spread awareness of the Climate Strike License.
-2. To share the algorithm that fits text and shapes to the canvas in a nice way
+2. To share the algorithm that fits text and shapes to the canvas in a nice way.
+3. To provide easy access to all the 128 quotes that I have gathered for this project.
 
 ## How to run
 
@@ -26,6 +27,8 @@ Before doing anything, you must install dependencies with `yarn` or `npm i`.
 ### Development mode
 
 `yarn dev` or `npm run dev`
+
+It can now be accessed on [localhost:4000](localhost:4000).
 
 ### Build project and create zip file
 
