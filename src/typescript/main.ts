@@ -375,8 +375,11 @@ function startSketch (s: p5): void {
 
     prepareLines()
     drawAllLines()
+
+    // Draw the labels in the bottom of the piece
     drawLabels()
 
+    // Add a dither effect for additional glitchy effect
     dither(s, ditherEffect)
 
     fxpreview()

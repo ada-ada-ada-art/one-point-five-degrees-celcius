@@ -20,6 +20,12 @@ For three reasons:
 2. To share the algorithm that fits text and shapes to the canvas in a nice way.
 3. To provide easy access to all the 128 quotes that I have gathered for this project.
 
+The License can be found in LICENSE.md. You can read more about it [here](https://climatestrike.software/).
+
+The algorithm can be found in the `prepareLines()` function in `src/typescript/main.ts`.
+
+The quotes can be found in `src/typescript/globals.ts`.
+
 ## How to run
 
 Before doing anything, you must install dependencies with `yarn` or `npm i`.
