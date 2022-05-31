@@ -16,6 +16,7 @@ Built with p5.js.`)
 const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}LICENSE.md`
 console.log('License can be found here: ' + url)
 
+// The actual functions are found in the index.html, but we must declare them here so Typescript knows what to do with them
 declare function fxrand (): number
 declare function fxpreview (): void
 
@@ -123,6 +124,7 @@ window.$fxhashFeatures = {
 
 console.table(window.$fxhashFeatures)
 
+// These settings are used to create the color palette
 const fettepaletteSettings: fettepalette.GenerateRandomColorRampArgument = {
   total: 9,
   centerHue: window.$fxhashFeatures.Background === 'Reverse' ? (345 + fxrand() * 180) % 360 : fxrand() * 360,
@@ -163,6 +165,7 @@ let lona = new p5(startSketch,
   document.getElementById('sketch') || undefined
 )
 
+// We use a debounce in order to make sure that reset doesn't happen at every single resize event, which can be quite a lot
 const resizeReset = debounce(() => lona.resetSketch())
 window.onresize = () => {
   if (lona) {
@@ -180,6 +183,7 @@ function startSketch (s: p5): void {
   s.randomSeed(initialRand)
   s.noiseSeed(initialRand)
 
+  // Load the basic variables
   let canvasWidth = window.innerWidth
   let canvasHeight = window.innerHeight
   let backgroundColor = s.color(255, 255, 255)
@@ -187,9 +191,11 @@ function startSketch (s: p5): void {
   let startColor = s.color(colorRamp.light[0][0], colorRamp.light[0][1] * 100, colorRamp.light[0][2] * 100)
   let endColor = s.color(colorRamp.base[4][0], colorRamp.base[4][1] * 100, colorRamp.base[4][2] * 100)
 
+  // Get a random sentence on first load
   let sentenceId: number|string = Math.floor(s.random(0, sentences.length))
   let sentence: string = sentences[sentenceId]
   console.log(`Quote #${sentenceId} of ${sentences.length}`)
+  // If we have determined a special text, we need to use a custom sentence
   if (window.$fxhashFeatures['Special text'] === 'Firehouse') {
     sentenceId = 'our house is on fire'
     sentence = 'Our house is on fire.'
@@ -212,18 +218,24 @@ function startSketch (s: p5): void {
   let jumbledArr = [] as string[]
   initSentence()
 
+  // These settings decide the "margin" of the text
   let leftOffset = s.width / 10
   let rightOffset = s.width / 10
   let topOffset = s.height / 10
   let bottomOffset = s.height / 10
   let textMargin = s.height / jumbledArr.length
+
+  // Font variables
   let fontSize = 30
   let mainFont: p5.Font
 
+  // This takes the sentence and turns into a jumbled array.
+  // E.g. "Climate delay is the new climate denial." might become ["Climate delay is", "the new", "climate denial."] or it might become ["Climate", "delay is the new", "climate", "denial."]
+  // The entries in the jumbled array will be separate by some colorful shapes
   function initSentence (): void {
     const sentenceArr = sentence.split(' ')
     jumbledArr = [] as string[]
-    // We set a limit for the string, so we don't have to deal with splitting a too long string and move to next line and shit
+    // We set a limit for the string, so we don't have to deal with splitting a too long string and move to next line and stuff like that
     const maxStringLength = 20
     sentenceArr.reduce((prev, cur, idx, arr) => {
       const rand = s.random()
@@ -263,6 +275,7 @@ function startSketch (s: p5): void {
     s.randomSeed(initialRand)
     s.noiseSeed(initialRand)
 
+    // Window size might've changed, so we reinitialize these
     canvasWidth = window.innerWidth
     canvasHeight = window.innerHeight
 
@@ -274,21 +287,27 @@ function startSketch (s: p5): void {
     bottomOffset = s.height / 10
     textMargin = s.height / jumbledArr.length
 
+    // We call setup manually when resetting the sketch
     s.setup()
   }
 
+  // Font needs to be loaded before anything
   s.preload = () => {
     mainFont = s.loadFont('./public/fonts/Inter-Light.otf')
   }
 
+  // We use speech synthesis to read text out loud as a bonus feature
   const synth = window.speechSynthesis
   let voices = [] as SpeechSynthesisVoice[]
 
+  // Text can be a bit hard to place with p5, so we have to calculate where it should start first
   let textY = fontSize + textMargin
+  // Each line of text+shapes is in a separate p5.Graphics, so we collect them here
   let allLineGraphics = [] as p5.Graphics[]
 
   let canv: p5.Renderer = null
   s.setup = () => {
+    // Adds some screen reader compatibility, which is different based on features
     s.describeElement('Text', `Showing the following text: ${sentence}.`, s.FALLBACK)
     s.describeElement('Shapes', `The text is surrounded by shapes in a ${window.$fxhashFeatures.Shape} shape. The size of the shapes is ${window.$fxhashFeatures['Shape size']}.`, s.FALLBACK)
     if (window.$fxhashFeatures.Background === 'Dark') s.describeElement('Background', 'The background color of the canvas is dark with white text.', s.FALLBACK)
@@ -300,11 +319,16 @@ function startSketch (s: p5): void {
     } else {
       s.resizeCanvas(canvasWidth, canvasHeight)
     }
+
+    // Font size should change depending on the length of the text as well as the screen height, so we handle that here
     const minFontSize = s.map(s.height, 360, 1000, 10, 20, true)
     const maxFontSize = s.map(s.height, 360, 1000, 15, 50, true)
     fontSize = s.map(sentence.length, 80, 180, maxFontSize, minFontSize, true)
+
+    // We initialize the main p5 sketch with desired rectMode, colorMode, etc.
     initGraphic(s)
 
+    // Establish colors
     if (window.$fxhashFeatures.Background === 'Regular') {
       backgroundColor = s.color(s.random(0, 360), s.random(0, 10), s.random(30, 100))
       textColor = s.color('#000')
@@ -322,14 +346,18 @@ function startSketch (s: p5): void {
       textColor = s.color(0, 0, 100)
     }
 
+    // Reinitialize margins again
     leftOffset = s.width / 10
     rightOffset = s.width / 10
     topOffset = s.height / 10
     bottomOffset = s.height / 10
     textMargin = s.height / jumbledArr.length
 
+    // Not all browsers support SpeechSynthesis (e.g. the fxhash capture module), so we check first
     if (synth) {
+      // Get a list of all voices installed on the user's device
       voices = synth.getVoices()
+      // This should also happen in case the voices are updated
       if (speechSynthesis.onvoiceschanged !== undefined) {
         speechSynthesis.onvoiceschanged = () => {
           voices = synth.getVoices()
@@ -337,6 +365,7 @@ function startSketch (s: p5): void {
       }
     }
 
+    // We make double sure that the lineGraphics are removed when running setup
     for (const graph of allLineGraphics) {
       graph.remove()
     }
@@ -436,6 +465,7 @@ function startSketch (s: p5): void {
     s.text(idLabelTxt, s.width - rightOffset, s.height - bottomOffset + labelFontSize)
   }
 
+  // Draws the p5.Graphics to the canvas in a nice way
   function drawAllLines (): void {
     const boundingBox: RectBounds = {
       x: leftOffset,
@@ -452,6 +482,7 @@ function startSketch (s: p5): void {
     }
   }
 
+  // Calculates the positions and draws all the lines to the p5.Graphics, but doesn't draw the graphics to the canvas yet
   function prepareLines (): void {
     const shapeType = window.$fxhashFeatures.Shape
 
@@ -464,15 +495,23 @@ function startSketch (s: p5): void {
       h: 0
     }
 
+    // Each line is a separate p5.Graphic, which needs to be initialized with proper rectMode, colorMode, etc.
     let activeLineGraphic = s.createGraphics(s.width, s.height)
     initGraphic(activeLineGraphic)
+
+    // Go through each set of words in the jumbled array, and attempt to place them
     for (let i = 0; i < jumbledArr.length; i++) {
+      // Trim the text first
       const txt = jumbledArr[i].trim()
+      // Find the text that comes after this one (if it exists)
       const nextTxt = i < jumbledArr.length - 1 ? jumbledArr[i + 1].trim() : ''
+
+      // What is the expected x position of the text?
       const textX = i === 0 ? shapeBounds.x + shapeBounds.w : shapeBounds.x + shapeBounds.w + fontSize / 2
+      // What size should the shapes be that we draw in between the text pieces?
       const shapeRadius = fontSize / 2
 
-      // Simulate the text we're about to write
+      // We simulate the text we're about to write, so we can check if it fits
       const simulatedBox = drawText({
         txt,
         baseX: textX,
@@ -482,10 +521,11 @@ function startSketch (s: p5): void {
         isSimulation: true
       })
       let shouldSkipText = false
-      // If it goes out of bounds, we might want to start with a circle on next line
+      // If it looks like the current text goes out of bounds, we throw a die to see if we want to start with some shapes on next line
       if (simulatedBox.wentOutOfBounds) {
         shouldSkipText = s.random() > 0.5
       }
+      // If we're not skipping text, we draw the text as calculated
       if (!shouldSkipText) {
         drawText({
           txt,
@@ -496,10 +536,14 @@ function startSketch (s: p5): void {
           graphics: activeLineGraphic
         })
       }
+
+      // Figure out how we want to draw the shapes
       let baseShapeX = shouldSkipText ? simulatedBox.x + shapeRadius : simulatedBox.x + simulatedBox.w + fontSize
       let baseShapeY = simulatedBox.y + simulatedBox.h / 2
       let totalShapeWidth = s.random(s.width / 10, s.width / 5)
-      // Draw shapes now if we have skipped the text, else just simulate them so we can make sure we don't go off bounds
+
+      // In case we skipped the text, we want to draw shapes here
+      // If not, we will try simulating the shapes that we are about to draw to make sure we don't go off bounds
       shapeBounds = drawShapes({
         baseX: baseShapeX,
         baseY: baseShapeY,
@@ -513,7 +557,7 @@ function startSketch (s: p5): void {
       })
 
       if (shouldSkipText) {
-        // If we skipped text, we want to draw it now after the shapes we just drew
+        // If we skipped text earlier, we want to draw it now after the shapes we just drew
         const skippedTextBox = drawText({
           txt,
           baseX: shapeBounds.x + shapeBounds.w + fontSize / 2,
@@ -522,7 +566,7 @@ function startSketch (s: p5): void {
           font: mainFont,
           graphics: activeLineGraphic
         })
-        // And then we draw shapes once again
+        // And after drawing text, we simulate drawing shapes once again to prevent out-of-bounds
         baseShapeX = skippedTextBox.x + skippedTextBox.w + fontSize
         baseShapeY = skippedTextBox.y + skippedTextBox.h / 2
         shapeBounds = drawShapes({
@@ -547,13 +591,14 @@ function startSketch (s: p5): void {
         isSimulation: true
       })
 
-      // If the next text was going to be out of bounds, we fill with shapes
+      // If the next text was going to be out of bounds, we calculate how to fill the rest of the line with shapes
       if (simulatedNextTextBox.wentOutOfBounds) {
         totalShapeWidth = s.width - baseShapeX - rightOffset - shapeRadius
       } else if (shapeBounds.x + shapeBounds.w > s.width - rightOffset) {
-        // If the shapes were going to go out of bounds, we make sure not to go out of bounds
+        // If the shapes were going to go out of bounds, we just adjust it  sure not to go out of bounds
         totalShapeWidth = s.width - rightOffset - shapeBounds.x
       }
+      // We use the previous calculations to draw the shapes
       if (totalShapeWidth > 0) {
         shapeBounds = drawShapes({
           baseX: baseShapeX,
@@ -567,17 +612,20 @@ function startSketch (s: p5): void {
         })
       }
 
-      // If the next text was gonna go out of bounds, we move to the next line
+      // If the next text was gonna go out of bounds, we finalize this line graphic and create a new one, which will be used in next loop
       if (simulatedNextTextBox.wentOutOfBounds) {
         allLineGraphics.push(activeLineGraphic)
         activeLineGraphic = s.createGraphics(s.width, s.height)
         initGraphic(activeLineGraphic)
       }
 
+      // If we're at the last piece of text, we want to remove the current line graphic from the DOM
       if (i === jumbledArr.length - 1) activeLineGraphic.remove()
     }
   }
 
+  // Draws the text in various ways, based on given options
+  // Also possible to just simulate drawing, if we want to calculate how much it would fill
   function drawText (opts: DrawTextOpts): TextBounds {
     let textBox = opts.font.textBounds(opts.txt, opts.baseX, opts.baseY) as RectBounds
     let wentOutOfBounds = false
@@ -623,6 +671,8 @@ function startSketch (s: p5): void {
     }
   }
 
+  // Draws the shapes in various ways, based on given options
+  // Also possible to just simulate drawing, if we want to calculate how much it would fill
   function drawShapes (opts: DrawShapesOpts): RectBounds {
     let drawnShapeRadius = opts.shapeRadius
     if (window.$fxhashFeatures['Shape size'] === 'Triple') {
