@@ -28,7 +28,7 @@ Before doing anything, you must install dependencies with `yarn` or `npm i`.
 
 `yarn dev` or `npm run dev`
 
-It can now be accessed on [localhost:4000](localhost:4000).
+It can now be accessed on [localhost:4000](http://localhost:4000).
 
 ### Build project and create zip file
 
